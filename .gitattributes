@@ -1,0 +1,18 @@
+# Force LF line endings for all text files
+* text=auto eol=lf
+
+# Rust source files
+*.rs text diff=rust
+
+# Configuration and documentation files
+*.toml text
+*.md text
+
+# Shell scripts
+*.sh text eol=lf
+
+# Lockfiles (mark as generated to collapse diffs in remote hosts)
+Cargo.lock linguist-generated
+
+# Custom binary format (disable line conversion and auto text merges, use xff diff driver)
+*.xff -text -merge diff=xff
