@@ -1,4 +1,4 @@
-# nomos
+# Nomos
 
 TODO:
 
@@ -16,13 +16,13 @@ You can learn more about that [here](https://blog.xqhare.net/posts/why_solve_pro
 
 ## Environment
 
-nomos expects the environment to provide:
+Nomos expects the environment to provide:
 
 - `ls` UNIX command
 
 ## Naming
 
-As with all my projects, nomos is named after an ancient deity.
+As with all my projects, Nomos is named after an ancient deity.
 Learn more about my naming scheme [here](https://blog.xqhare.net/posts/explaining_the_pantheon/).
 
 Nomos was a lesser Greek deity of laws, statutes, and ordinances.
@@ -46,7 +46,7 @@ nomos = { git = "https://github.com/xqhare/nomos" }
 
 ## License
 
-nomos is distributed under the [MIT](https://github.com/xqhare/nomos/blob/master/LICENSE) license.
+Nomos is distributed under the [MIT](https://github.com/xqhare/nomos/blob/master/LICENSE) license.
 
 ## Contributing
 

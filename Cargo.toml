@@ -8,31 +8,12 @@ license = "MIT"
 
 [dependencies]
 
-# Uncomment the following lines to enable often used dependencies
-
-# Rusty Toolbox
-# athena = { git = "https://github.com/xqhare/athena.git" }
-
-# XffValue only (no dependencies)
-# aequa = { git = "https://github.com/xqhare/aequa.git" }
-
 # Error handling
-# nemesis = { git = "https://github.com/xqhare/nemesis.git" }
+nemesis = { git = "https://github.com/xqhare/nemesis.git" }
 
-# Serde for XffValue (Nabu and Mawo reexport `XffValue`)
-# Working with `.xff` files
-# nabu = { git = "https://github.com/xqhare/nabu.git" }
 # Working with `.json` or `.csv` files
-# mawu = { git = "https://github.com/xqhare/mawu.git" }
-
-# CSRNG
-# tyche = { git = "https://github.com/xqhare/tyche.git" }
-
-# Create valid paths and hidden directories
-# areia = { git = "https://github.com/xqhare/areia.git" }
+mawu = { git = "https://github.com/xqhare/mawu.git" }
 
 # Time and date library (easily integrates with `XffValue`)
-# horae = { git = "https://github.com/xqhare/horae.git" }
+horae = { git = "https://github.com/xqhare/horae.git" }
 
-# Signal-handling library 
-# hades = { git = "https://github.com/xqhare/hades.git" }
