@@ -1,10 +1,5 @@
 # Nomos
 
-TODO:
-
-- Consider ArgosCI integration
-- Consider needed dependencies in `Cargo.toml`
-
 The base for my project management solution
 
 It follows my "All code written by me or part of rust's standard library and libc" philosophy.
