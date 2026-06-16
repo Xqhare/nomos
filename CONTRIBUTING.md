@@ -1,6 +1,6 @@
 # Contributing
 
-$NAME is open to contributions by anyone. As long as you are a human, you are welcome.\
+nomos is open to contributions by anyone. As long as you are a human, you are welcome.\
 Wankers over Clankers after all. This doesn’t mean you can’t use AI to assist you - However, you are expected to be able to explain your code and any decisions made.
 
 ## Contribution Rules
@@ -31,19 +31,19 @@ In general documentation should be written in the following format:
 
 # Arguments
 
-* `[Argument Name]` - [Description]
+* `[Argument Name]` - The base for my project management solution
 
 # Returns
 
-[Description]
+The base for my project management solution
 
 # Errors
 
-[Description]
+The base for my project management solution
 
 # Panics
 
-[Description]
+The base for my project management solution
 
 # Example
 

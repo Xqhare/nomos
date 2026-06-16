@@ -1,33 +1,33 @@
 use std::fmt;
 
-pub type $NAMEResult<T> = Result<T, $NAMEError>;
+pub type nomosResult<T> = Result<T, nomosError>;
 
 #[derive(Debug)]
-pub enum $NAMEError {
+pub enum nomosError {
     Generic(String),
     Io(std::io::Error),
 }
 
-impl fmt::Display for $NAMEError {
+impl fmt::Display for nomosError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            $NAMEError::Generic(msg) => write!(f, "{}", msg),
-            $NAMEError::Io(err) => write!(f, "{}", err),
+            nomosError::Generic(msg) => write!(f, "{}", msg),
+            nomosError::Io(err) => write!(f, "{}", err),
         }
     }
 }
 
-impl std::error::Error for $NAMEError {
+impl std::error::Error for nomosError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            $NAMEError::Generic(_) => None,
-            $NAMEError::Io(err) => Some(err),
+            nomosError::Generic(_) => None,
+            nomosError::Io(err) => Some(err),
         }
     }
 }
 
-impl From<std::io::Error> for $NAMEError {
+impl From<std::io::Error> for nomosError {
     fn from(err: std::io::Error) -> Self {
-        $NAMEError::Io(err)
+        nomosError::Io(err)
     }
 }

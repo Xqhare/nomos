@@ -1,12 +1,11 @@
-# $NAME
+# nomos
 
 TODO:
 
-- Run `bash init.sh`, all needed inputs will be asked for
 - Consider ArgosCI integration
 - Consider needed dependencies in `Cargo.toml`
 
-[Description]
+The base for my project management solution
 
 It follows my "All code written by me or part of rust's standard library and libc" philosophy.
 You can learn more about that [here](https://blog.xqhare.net/posts/why_solve_problems/).
@@ -17,16 +16,16 @@ You can learn more about that [here](https://blog.xqhare.net/posts/why_solve_pro
 
 ## Environment
 
-$NAME expects the environment to provide:
+nomos expects the environment to provide:
 
 - `ls` UNIX command
 
 ## Naming
 
-As with all my projects, $NAME is named after an ancient deity.
+As with all my projects, nomos is named after an ancient deity.
 Learn more about my naming scheme [here](https://blog.xqhare.net/posts/explaining_the_pantheon/).
 
-[Deity Description]
+Nomos was a lesser Greek deity of laws, statutes, and ordinances.
 
 ## Usage
 
@@ -36,7 +35,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-$NAME = { git = "https://github.com/xqhare/$NAME" }
+nomos = { git = "https://github.com/xqhare/nomos" }
 ```
 
 ### Example
@@ -47,8 +46,8 @@ $NAME = { git = "https://github.com/xqhare/$NAME" }
 
 ## License
 
-$NAME is distributed under the [MIT](https://github.com/xqhare/$NAME/blob/master/LICENSE) license.
+nomos is distributed under the [MIT](https://github.com/xqhare/nomos/blob/master/LICENSE) license.
 
 ## Contributing
 
-See [CONTRIBUTING](https://github.com/xqhare/$NAME/blob/master/CONTRIBUTING.md) for contribution guidelines.
+See [CONTRIBUTING](https://github.com/xqhare/nomos/blob/master/CONTRIBUTING.md) for contribution guidelines.

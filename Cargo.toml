@@ -1,8 +1,8 @@
 [package]
-name = "$NAME"
+name = "nomos"
 version = "0.1.0"
 edition = "2024"
-repository = "https://github.com/Xqhare/$NAME"
+repository = "https://github.com/Xqhare/nomos"
 authors = ["Xqhare"]
 license = "MIT"
 
