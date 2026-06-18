@@ -96,3 +96,54 @@ pub(crate) fn parse_line(
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::TaskStatus;
+    use std::path::Path;
+
+    #[test]
+    fn test_parse_nested_tasks_and_notes() {
+        let content = "\
+- [ ] Task 1 :: 2026-05-22 description +kind1 @loc1 key1=val1
+    - [/] Subtask 1.1 :: 2026-05-23 sub-description +kind2 @loc2
+    * Note 1.2 +kind3 #generic1
+- [x] Task 2 :: description dep=\"Task 1\"
+";
+        let path = Path::new("test.md");
+        let tasks = parse_string(content, path).unwrap();
+        let mut iter = tasks.iter();
+        
+        let t1 = iter.next().unwrap();
+        assert_eq!(t1.title, "Task 1");
+        assert_eq!(t1.status, TaskStatus::Open);
+        assert_eq!(t1.file_data.line, 1);
+        
+        // Test tags for Task 1
+        assert!(t1.tags.kind_tags.contains(&"kind1".to_string()));
+        assert!(t1.tags.location_tags.contains(&"loc1".to_string()));
+        
+        let subtasks = t1.sub_tasks.as_ref().unwrap();
+        let mut sub_iter = subtasks.iter();
+        let st1 = sub_iter.next().unwrap();
+        assert_eq!(st1.title, "Subtask 1.1");
+        assert_eq!(st1.status, TaskStatus::InProgress);
+        assert_eq!(st1.file_data.line, 2);
+        assert!(st1.tags.kind_tags.contains(&"kind2".to_string()));
+        assert!(st1.tags.location_tags.contains(&"loc2".to_string()));
+        
+        let notes = t1.notes.as_ref().unwrap();
+        let mut note_iter = notes.notes.iter();
+        let n1 = note_iter.next().unwrap();
+        assert_eq!(n1.text, "Note 1.2 +kind3 #generic1");
+        assert_eq!(n1.line, 3);
+        assert!(n1.tags.kind_tags.contains(&"kind3".to_string()));
+        assert!(n1.tags.generic_tags.contains(&"generic1".to_string()));
+        
+        let t2 = iter.next().unwrap();
+        assert_eq!(t2.title, "Task 2");
+        assert_eq!(t2.status, TaskStatus::Done);
+        assert_eq!(t2.file_data.line, 4);
+    }
+}
