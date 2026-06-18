@@ -17,5 +17,5 @@ mawu = { git = "https://github.com/xqhare/mawu.git" }
 # Time and date library (easily integrates with `XffValue`)
 horae = { git = "https://github.com/xqhare/horae.git" }
 
-aequa = { git = "https://github.com/xqhare/aequa.git" }
+athena = { git = "https://github.com/xqhare/athena.git", features = ["sorting"] }
 

@@ -28,8 +28,21 @@
 
 mod encoder;
 mod error;
+mod nomos;
 mod notes;
 mod parser;
 mod tags;
 mod task;
 mod utils;
+
+pub use error::NomosError;
+pub use nomos::Nomos;
+/// Prelude
+///
+/// Contains common types used in Nomos
+pub mod prelude {
+    pub use crate::notes::{Note, Notes};
+    pub use crate::tags::Tags;
+    pub use crate::task::{Task, Tasks};
+    pub use crate::utils::{FileData, TaskStatus};
+}

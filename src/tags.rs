@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+#[derive(Debug, Clone)]
 pub struct Tags {
     /// Starting with `+`
     pub kind_tags: Vec<String>,

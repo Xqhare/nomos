@@ -4,12 +4,13 @@ use nemesis::NemesisError;
 
 use crate::{error::NomosResult, tags::Tags};
 
+#[derive(Debug, Clone)]
 pub struct FileData {
     pub path: PathBuf,
     pub line: u32,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TaskStatus {
     Open,
     InProgress,
@@ -19,6 +20,7 @@ pub enum TaskStatus {
     Cut,
 }
 
+#[derive(Debug, Clone)]
 pub struct Dependencies(Vec<Dependency>);
 
 impl Dependencies {
@@ -36,6 +38,7 @@ impl Dependencies {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Dependency {
     pub title: String,
     pub project: Option<String>,

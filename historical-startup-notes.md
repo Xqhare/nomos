@@ -70,24 +70,19 @@ The `nomos` library is the parsing engine for Nomos files. It leverages the **Ma
 - **Global Config** (`~/.config/nomos/config.json`):
   ```json
   {
-    "workspace": {
-      "search_bases": [
-        "~/Adytum/Programming/rust",
-        "~/Adytum/Programming/python"
-      ]
-    }
+    "search_bases": [
+      "~/Adytum/Programming/rust",
+      "~/Adytum/Programming/python"
+    ]
   }
   ```
 - **Project Config** (`nomos.json` in a project root):
   ```json
   {
-    "project": {
-      "name": "aequa",
-      "task_files": [
-        "TODO.md",
-        "docs/roadmap.md"
-      ]
-    }
+    "task_files": [
+      "TODO.md",
+      "docs/roadmap.md"
+    ]
   }
   ```
 

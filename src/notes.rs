@@ -1,13 +1,14 @@
-use std::{iter::Peekable, path::Path, str::Lines};
+use std::path::Path;
 
 use nemesis::NemesisError;
 
 use crate::{
     error::{NomosError, NomosResult, Parser},
     tags::Tags,
-    utils::{make_tags_and_dependencies_from_line, split_into_words},
+    utils::make_tags_and_dependencies_from_line,
 };
 
+#[derive(Debug, Clone)]
 pub struct Notes {
     pub notes: Vec<Note>,
 }
@@ -27,6 +28,7 @@ impl From<Vec<Note>> for Notes {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Note {
     pub text: String,
     pub tags: Tags,

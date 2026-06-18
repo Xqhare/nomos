@@ -1,6 +1,6 @@
 use std::{iter::Peekable, path::Path, str::Lines};
 
-use aequa::local_date::LocalDate;
+use athena::local_date::LocalDate;
 use nemesis::NemesisError;
 
 use crate::{
@@ -8,12 +8,11 @@ use crate::{
     notes::{Note, Notes},
     parser::parse_line,
     tags::Tags,
-    utils::{
-        Dependencies, Dependency, FileData, TaskStatus, make_tags_and_dependencies_from_line,
-        split_into_words,
-    },
+    utils::{Dependencies, FileData, TaskStatus, make_tags_and_dependencies_from_line},
 };
 
+/// A collection of tasks
+#[derive(Debug, Clone)]
 pub struct Tasks(Vec<Task>);
 
 impl From<Vec<Task>> for Tasks {
@@ -23,27 +22,45 @@ impl From<Vec<Task>> for Tasks {
 }
 
 impl Tasks {
+    /// Creates an empty collection
+    pub fn new() -> Self {
+        Self(Vec::new())
+    }
+    /// Returns an iterator over the tasks
     pub fn iter(&self) -> impl Iterator<Item = &Task> {
         self.0.iter()
     }
+    /// Returns a mutable iterator over the tasks
+    ///
+    /// # Notes
+    /// Uses swap_remove
     pub fn remove(&mut self, index: usize) {
         self.0.swap_remove(index);
     }
+    /// Adds a task
+    pub fn push(&mut self, task: Task) {
+        self.0.push(task);
+    }
+    /// Extends the collection
+    pub fn extend(&mut self, tasks: Tasks) {
+        self.0.extend(tasks.0);
+    }
 }
 
+#[derive(Debug, Clone)]
 pub struct Task {
-    status: TaskStatus,
-    priority: Option<char>,
-    title: String,
-    inception_date: Option<LocalDate>,
-    completion_date: Option<LocalDate>,
-    tags: Tags,
-    dependencies: Dependencies,
+    pub status: TaskStatus,
+    pub priority: Option<char>,
+    pub title: String,
+    pub inception_date: Option<LocalDate>,
+    pub completion_date: Option<LocalDate>,
+    pub tags: Tags,
+    pub dependencies: Dependencies,
     /// Complete with tags and dependencies
-    description: Option<String>,
-    notes: Option<Notes>,
-    sub_tasks: Option<Tasks>,
-    file_data: FileData,
+    pub description: Option<String>,
+    pub notes: Option<Notes>,
+    pub sub_tasks: Option<Tasks>,
+    pub file_data: FileData,
 }
 
 impl Task {
@@ -92,7 +109,7 @@ impl Task {
                     lines,
                     line_number,
                     indent_level.saturating_add(4),
-                );
+                )?;
                 let _ = lines.next();
                 *line_number = line_number.saturating_add(1);
             } else {
@@ -113,6 +130,9 @@ impl Task {
         } else {
             Some(notes.into())
         };
+        // TODO: Validate the task
+        // - May only be status::done if all sub tasks are done
+        // - Title, status are not empty
         Ok(Task {
             status,
             priority,
