@@ -1,0 +1,14 @@
+{
+  "all": true,
+  "build":  {},
+  "test": {},
+  "examples-test": {},
+  "doc": {},
+  "doc-test": {},
+  "clippy": {},
+  "format": {},
+  "update": {},
+  "license": {},
+  "requires": ["nemesis", "mawu", "horae"]
+}
+
