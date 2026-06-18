@@ -48,7 +48,7 @@ impl Tags {
     }
     pub fn remove_metadata_tags(&mut self, tags: &[&str]) {
         for tag in tags {
-            self.metadata_tags.remove(tag.clone());
+            self.metadata_tags.remove(*tag);
         }
     }
 }
