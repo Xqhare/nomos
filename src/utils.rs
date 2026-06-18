@@ -83,10 +83,12 @@ pub fn make_tags_and_dependencies_from_line(line: &str) -> (Tags, Dependencies) 
     let mut tags = Tags::new();
     let mut dependencies = Dependencies::new();
     for word in words {
-        if word.starts_with('@') {
+        if word.starts_with('+') {
             tags.add_kind(&word[1..]);
-        } else if word.starts_with('#') {
+        } else if word.starts_with('@') {
             tags.add_location(&word[1..]);
+        } else if word.starts_with('#') {
+            tags.add_generic_tag(&word[1..]);
         } else if word.contains('=') {
             let (key, value) = word.split_once('=').unwrap();
             if key == "dep" {
