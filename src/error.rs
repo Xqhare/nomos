@@ -1,33 +1,34 @@
+use nemesis::NemesisError;
 use std::fmt;
 
-pub type nomosResult<T> = Result<T, nomosError>;
+pub type NomosResult<T> = Result<T, NemesisError>;
 
 #[derive(Debug)]
-pub enum nomosError {
+pub enum NomosError {
     Generic(String),
     Io(std::io::Error),
 }
 
-impl fmt::Display for nomosError {
+impl fmt::Display for NomosError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            nomosError::Generic(msg) => write!(f, "{}", msg),
-            nomosError::Io(err) => write!(f, "{}", err),
+            NomosError::Generic(msg) => write!(f, "{msg}"),
+            NomosError::Io(err) => write!(f, "{err}"),
         }
     }
 }
 
-impl std::error::Error for nomosError {
+impl std::error::Error for NomosError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            nomosError::Generic(_) => None,
-            nomosError::Io(err) => Some(err),
+            NomosError::Generic(_) => None,
+            NomosError::Io(err) => Some(err),
         }
     }
 }
 
-impl From<std::io::Error> for nomosError {
+impl From<std::io::Error> for NomosError {
     fn from(err: std::io::Error) -> Self {
-        nomosError::Io(err)
+        NomosError::Io(err)
     }
 }
