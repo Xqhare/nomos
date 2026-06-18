@@ -52,7 +52,6 @@ impl Note {
             )
             .add_ctx(format!("Line: {line_number} in file: {file_path:?}")));
         } else {
-            *line_number = line_number.saturating_add(1);
             Ok(Note {
                 text: line.to_string(),
                 tags,

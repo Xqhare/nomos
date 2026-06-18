@@ -75,6 +75,7 @@ impl Task {
         lines: &mut Peekable<Lines>,
         indent_level: u32,
     ) -> NomosResult<Task> {
+        let parent_line = *line_number;
         // Strip prefix ("- ") and validate minimum length of 9
         let mut line = make_line(line, file_path, *line_number)?;
         let status = make_status(line, file_path, *line_number)?;
@@ -99,26 +100,31 @@ impl Task {
         let (tags, dependencies) = make_tags_and_dependencies_from_line(line);
         let mut sub_tasks: Vec<Task> = Vec::new();
         let mut notes: Vec<Note> = Vec::new();
+
+        let child_indent = indent_level.saturating_add(4);
+        let child_prefix = " ".repeat(child_indent as usize);
+
         while let Some(next_line) = lines.peek() {
-            if next_line.starts_with(&" ".repeat(indent_level as usize)) {
+            if next_line.starts_with(&child_prefix) {
+                let next_line = lines.next().unwrap();
+                *line_number = line_number.saturating_add(1);
+                let stripped = &next_line[child_indent as usize..];
                 parse_line(
-                    line,
+                    stripped,
                     file_path,
                     &mut sub_tasks,
                     &mut notes,
                     lines,
                     line_number,
-                    indent_level.saturating_add(4),
+                    child_indent,
                 )?;
-                let _ = lines.next();
-                *line_number = line_number.saturating_add(1);
             } else {
                 break;
             }
         }
         let file_data = FileData {
             path: file_path.to_path_buf(),
-            line: *line_number,
+            line: parent_line,
         };
         let sub_tasks = if sub_tasks.is_empty() {
             None
