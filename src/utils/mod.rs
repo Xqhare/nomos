@@ -2,9 +2,13 @@ use std::path::{Path, PathBuf};
 
 use nemesis::NemesisError;
 
-use crate::{error::NomosResult, tags::Tags};
+use crate::{
+    error::NomosResult,
+    tags::Tags,
+    task::{Task, Tasks},
+};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FileData {
     pub path: PathBuf,
     pub line: u32,
@@ -109,4 +113,79 @@ pub fn make_tags_and_dependencies_from_line(line: &str) -> (Tags, Dependencies) 
         }
     }
     (tags, dependencies)
+}
+
+pub fn calc_line_size(task: &Task) -> u32 {
+    let mut size = 1u32;
+    if let Some(_notes) = &task.notes {
+        for _note in task.notes.iter() {
+            size = size.saturating_add(1);
+        }
+    }
+    if let Some(sub_tasks) = &task.sub_tasks {
+        for sub_task in sub_tasks.iter() {
+            size = size.saturating_add(calc_line_size(sub_task));
+        }
+    }
+
+    size
+}
+
+/// Shifts all lines in a task, starting at a specific line by an offset.
+pub fn shift_task_lines_by_offset(
+    tasks: &mut Tasks,
+    offset: i64,
+    starting_line: u32,
+) -> NomosResult<()> {
+    for task in tasks.iter_mut() {
+        if task.file_data.line >= starting_line {
+            // Casting to make maths easier
+            let new_ln = (task.file_data.line as i64).saturating_add(offset);
+            task.file_data.line = new_ln as u32;
+            sub_at_line(task.to_string().as_str(), new_ln, &task.file_data.path)?;
+            if let Some(sub_tasks) = &mut task.sub_tasks {
+                shift_task_lines_by_offset(sub_tasks, offset, new_ln as u32)?;
+            }
+            if let Some(notes) = &mut task.notes {
+                for note in notes.iter_mut() {
+                    if note.line >= starting_line {
+                        let new_ln = (note.line as i64).saturating_add(offset);
+                        note.line = new_ln as u32;
+                        let complete_note = format!(
+                            "{}* {}",
+                            padding(task.parents_amount.saturating_add(1).saturating_mul(4)),
+                            note.text
+                        );
+                        sub_at_line(&complete_note, new_ln, &task.file_data.path)?;
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+pub fn padding(amount: u32) -> String {
+    const SPACE: &str = " ";
+    if amount == 0 {
+        return String::new();
+    }
+    SPACE.repeat(amount as usize)
+}
+
+pub fn sub_at_line(text: &str, line_number: i64, file_path: &Path) -> NomosResult<String> {
+    const SUBSTITUTE_SCRIPT: &str = include_str!("substitute_at_ln.sh");
+    let output = std::process::Command::new("bash")
+        .arg("-c")
+        .arg(SUBSTITUTE_SCRIPT)
+        .arg(line_number.to_string())
+        .arg(text)
+        .arg(file_path)
+        .output()
+        .map_err(|err| {
+            NemesisError::new("nomos::utils::sub_at_line", err)
+                .add_ctx("Failed to run bash script to substitute at line")
+                .add_ctx(format!("Line: {line_number} in file: {file_path:?}"))
+        })?;
+    Ok(String::from_utf8_lossy(&output.stdout).to_string())
 }

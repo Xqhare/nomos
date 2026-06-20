@@ -8,6 +8,7 @@ pub enum NomosError {
     Generic(String),
     Parser(Parser),
     Config(String),
+    Task(String),
     Io(std::io::Error),
 }
 
@@ -31,6 +32,7 @@ impl fmt::Display for Parser {
 impl fmt::Display for NomosError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            NomosError::Task(msg) => write!(f, "{msg}"),
             NomosError::Config(msg) => write!(f, "{msg}"),
             NomosError::Parser(msg) => write!(f, "{msg}"),
             NomosError::Generic(msg) => write!(f, "{msg}"),
@@ -42,7 +44,10 @@ impl fmt::Display for NomosError {
 impl std::error::Error for NomosError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            NomosError::Generic(_) | NomosError::Parser(_) | NomosError::Config(_) => None,
+            NomosError::Generic(_)
+            | NomosError::Parser(_)
+            | NomosError::Task(_)
+            | NomosError::Config(_) => None,
             NomosError::Io(err) => Some(err),
         }
     }

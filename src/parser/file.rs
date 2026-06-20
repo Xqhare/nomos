@@ -13,16 +13,20 @@ use crate::{
     utils::read_file,
 };
 
-pub fn parse_file<P: Into<PathBuf>>(file_path: P) -> NomosResult<Tasks> {
+pub fn parse_file<P: Into<PathBuf>>(file_path: P, project: Option<String>) -> NomosResult<Tasks> {
     let file_path = file_path.into();
     let file = read_file(&file_path)?;
-    parse_string(&file, &file_path)
+    parse_string(&file, &file_path, project)
 }
 
 /// Parse a string into tasks
 ///
 /// Designed this way for testability
-pub(crate) fn parse_string(file: &str, file_path: &Path) -> NomosResult<Tasks> {
+pub(crate) fn parse_string(
+    file: &str,
+    file_path: &Path,
+    project: Option<String>,
+) -> NomosResult<Tasks> {
     let mut lines = file.lines().peekable();
     // Overallocates, but shrinks when needed at the end
     let mut out: Vec<Task> = Vec::with_capacity(lines.size_hint().0);
@@ -42,6 +46,7 @@ pub(crate) fn parse_string(file: &str, file_path: &Path) -> NomosResult<Tasks> {
             &mut lines,
             &mut line_number,
             0,
+            project.clone(),
         )?;
         if notes_out.len() > 0 {
             // Dangling note
@@ -69,6 +74,7 @@ pub(crate) fn parse_line(
     lines: &mut Peekable<Lines>,
     line_number: &mut u32,
     indent_level: u32,
+    project: Option<String>,
 ) -> NomosResult<()> {
     if line.starts_with("- ") {
         // Task
@@ -78,6 +84,7 @@ pub(crate) fn parse_line(
             line_number,
             lines,
             indent_level,
+            project,
         )?);
     } else {
         if indent_level == 0 {
@@ -112,7 +119,7 @@ mod tests {
 - [x] Task 2 :: description dep=\"Task 1\"
 ";
         let path = Path::new("test.md");
-        let tasks = parse_string(content, path).unwrap();
+        let tasks = parse_string(content, path, Some("project1".to_string())).unwrap();
         let mut iter = tasks.iter();
 
         let t1 = iter.next().unwrap();

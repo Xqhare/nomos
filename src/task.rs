@@ -1,4 +1,4 @@
-use std::{iter::Peekable, path::Path, str::Lines};
+use std::{fmt::Display, iter::Peekable, path::Path, str::Lines};
 
 use athena::local_date::LocalDate;
 use nemesis::NemesisError;
@@ -8,7 +8,7 @@ use crate::{
     notes::{Note, Notes},
     parser::parse_line,
     tags::Tags,
-    utils::{Dependencies, FileData, TaskStatus, make_tags_and_dependencies_from_line},
+    utils::{Dependencies, FileData, TaskStatus, make_tags_and_dependencies_from_line, padding},
 };
 
 /// A collection of tasks
@@ -31,6 +31,10 @@ impl Tasks {
         self.0.iter()
     }
     /// Returns a mutable iterator over the tasks
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Task> {
+        self.0.iter_mut()
+    }
+    /// Returns a mutable iterator over the tasks
     ///
     /// # Notes
     /// Uses swap_remove
@@ -49,6 +53,7 @@ impl Tasks {
 
 #[derive(Debug, Clone)]
 pub struct Task {
+    pub parents_amount: u32,
     pub status: TaskStatus,
     pub priority: Option<char>,
     pub title: String,
@@ -61,6 +66,38 @@ pub struct Task {
     pub notes: Option<Notes>,
     pub sub_tasks: Option<Tasks>,
     pub file_data: FileData,
+    pub project: String,
+}
+
+impl Display for Task {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", padding(self.parents_amount.wrapping_mul(4)))?;
+        match self.status {
+            TaskStatus::Open => write!(f, "- [ ] ")?,
+            TaskStatus::InProgress => write!(f, "- [/] ")?,
+            TaskStatus::Done => write!(f, "- [x] ")?,
+            TaskStatus::Blocked => write!(f, "- [B] ")?,
+            TaskStatus::Deferred => write!(f, "- [D] ")?,
+            TaskStatus::Cut => write!(f, "- [C] ")?,
+        };
+        if let Some(char) = self.priority {
+            write!(f, "({char}) ")?;
+        };
+        write!(f, "{}", self.title)?;
+        write!(f, " :: ")?;
+        if let Some(inception_date) = self.inception_date {
+            write!(f, "{} ", inception_date.to_string())?;
+        }
+        if let Some(completion_date) = self.completion_date
+            && self.status == TaskStatus::Done
+        {
+            write!(f, "{} ", completion_date.to_string())?;
+        }
+        if let Some(description) = &self.description {
+            write!(f, "\n{}", description)?;
+        }
+        Ok(())
+    }
 }
 
 impl Task {
@@ -74,6 +111,7 @@ impl Task {
         line_number: &mut u32,
         lines: &mut Peekable<Lines>,
         indent_level: u32,
+        project: Option<String>,
     ) -> NomosResult<Task> {
         let parent_line = *line_number;
         // Strip prefix ("- ") and validate minimum length of 9
@@ -117,6 +155,7 @@ impl Task {
                     lines,
                     line_number,
                     child_indent,
+                    project.clone(),
                 )?;
             } else {
                 break;
@@ -136,9 +175,12 @@ impl Task {
         } else {
             Some(notes.into())
         };
+        // Assumes indent level is a multiple of 4
+        let parents_amount = indent_level.saturating_div(4);
         // TODO: Validate the task
         // - May only be status::done if all sub tasks are done
         // - Title, status are not empty
+        // - project really should be set and not an option at all
         Ok(Task {
             status,
             priority,
@@ -151,6 +193,8 @@ impl Task {
             notes,
             sub_tasks,
             file_data,
+            project: project.unwrap_or_default(),
+            parents_amount,
         })
     }
 }

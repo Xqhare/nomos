@@ -20,6 +20,9 @@ impl Notes {
     pub fn remove_note(&mut self, index: usize) {
         self.notes.swap_remove(index);
     }
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Note> {
+        self.notes.iter_mut()
+    }
 }
 
 impl From<Vec<Note>> for Notes {

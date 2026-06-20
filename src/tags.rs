@@ -51,4 +51,13 @@ impl Tags {
             self.metadata_tags.remove(*tag);
         }
     }
+    pub fn contains_kind(&self, kind: &str) -> bool {
+        self.kind_tags.contains(&kind.to_string())
+    }
+    pub fn contains_location(&self, location: &str) -> bool {
+        self.location_tags.contains(&location.to_string())
+    }
+    pub fn contains_generic_tag(&self, tag: &str) -> bool {
+        self.generic_tags.contains(&tag.to_string())
+    }
 }
