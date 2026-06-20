@@ -27,7 +27,7 @@ mod utils;
 /// use nomos::Nomos;
 ///
 /// let mut nomos = Nomos::new("config.json");
-/// assert!(nomos.get_tasks().is_err()); // Config file does not exist
+/// assert!(nomos.is_err()); // Config file does not exist
 /// ```
 pub struct Nomos {
     tasks: Tasks,

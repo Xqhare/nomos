@@ -1,10 +1,17 @@
 [package]
 name = "nomos"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 repository = "https://github.com/Xqhare/nomos"
 authors = ["Xqhare"]
 license = "MIT"
+
+[profile.release]
+opt-level = "s"
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
 
 [dependencies]
 
@@ -17,5 +24,16 @@ mawu = { git = "https://github.com/xqhare/mawu.git" }
 # Time and date library (easily integrates with `XffValue`)
 horae = { git = "https://github.com/xqhare/horae.git" }
 
+# Kahns algorithm
 athena = { git = "https://github.com/xqhare/athena.git", features = ["sorting"] }
 
+# CLI dependencies
+
+# CLI itself
+eshu = { git = "https://github.com/xqhare/eshu.git" }
+
+# Paths
+areia = { git = "https://github.com/xqhare/areia.git" }
+
+# Setup
+brigid = { git = "https://github.com/xqhare/brigid.git" }

@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use nemesis::NemesisError;
+use nemesis::{NemesisError, NemesisResultExt};
 
 use crate::{
     error::NomosResult,
@@ -8,22 +8,33 @@ use crate::{
     task::{Task, Tasks},
 };
 
+/// File data
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FileData {
+    /// Full file path
     pub path: PathBuf,
+    /// Line number of entry
     pub line: u32,
 }
 
+/// Task status
 #[derive(Debug, PartialEq, Clone)]
 pub enum TaskStatus {
+    /// Open
     Open,
+    /// In progress
     InProgress,
+    /// Done
     Done,
+    /// Blocked
     Blocked,
+    /// Deferred
     Deferred,
+    /// Cut
     Cut,
 }
 
+/// Dependencies of a task
 #[derive(Debug, Clone)]
 pub struct Dependencies(Vec<Dependency>);
 
@@ -42,11 +53,15 @@ impl Dependencies {
     }
 }
 
+/// Dependency of a task
 #[derive(Debug, Clone)]
 pub struct Dependency {
+    /// Task title that is depended on
     pub title: String,
+    /// Project name if not same project
     pub project: Option<String>,
 }
+
 pub fn read_file<P: AsRef<Path>>(path: P) -> NomosResult<String> {
     match std::fs::read_to_string(path.as_ref()) {
         Ok(content) => Ok(content),
@@ -197,19 +212,16 @@ pub fn padding(amount: u32) -> String {
     SPACE.repeat(amount as usize)
 }
 
-pub fn sub_at_line(text: &str, line_number: i64, file_path: &Path) -> NomosResult<String> {
-    const SUBSTITUTE_SCRIPT: &str = include_str!("substitute_at_ln.sh");
-    let output = std::process::Command::new("bash")
-        .arg("-c")
-        .arg(SUBSTITUTE_SCRIPT)
-        .arg(line_number.to_string())
-        .arg(text)
-        .arg(file_path)
-        .output()
-        .map_err(|err| {
-            NemesisError::new("nomos::utils::sub_at_line", err)
-                .add_ctx("Failed to run bash script to substitute at line")
-                .add_ctx(format!("Line: {line_number} in file: {file_path:?}"))
-        })?;
-    Ok(String::from_utf8_lossy(&output.stdout).to_string())
+// This could be done better via byte offsets instead of tracking the ln
+pub fn sub_at_line(text: &str, line_number: i64, file_path: &Path) -> NomosResult<()> {
+    let file = read_file(file_path).map_err(|err| {
+        NemesisError::new("nomos::utils::sub_at_line", err)
+            .add_ctx("Failed to read file")
+            .add_ctx(format!("Line: {line_number} in file: {file_path:?}"))
+    })?;
+    let mut file = file.lines().collect::<Vec<&str>>();
+
+    file[line_number as usize] = text;
+
+    save_file_u8(file_path, &file.join("\n").as_bytes()).add_ctx("Sub_at_line failed.")
 }
