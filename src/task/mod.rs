@@ -4,12 +4,20 @@ use athena::local_date::LocalDate;
 use nemesis::NemesisError;
 
 use crate::{
-    error::{NomosError, NomosResult, Parser},
+    NomosError,
+    error::{NomosResult, Parser},
     notes::{Note, Notes},
     parser::parse_line,
     tags::Tags,
+    task::{
+        utils::{make_dates, make_line, make_priority, make_status, make_title},
+        validate::validate_task,
+    },
     utils::{Dependencies, FileData, TaskStatus, make_tags_and_dependencies_from_line, padding},
 };
+
+mod utils;
+mod validate;
 
 /// A collection of tasks
 #[derive(Debug, Clone)]
@@ -51,21 +59,34 @@ impl Tasks {
     }
 }
 
+/// A task
 #[derive(Debug, Clone)]
 pub struct Task {
-    pub parents_amount: u32,
+    /// Amount of parents
+    pub(crate) parents_amount: u32,
+    /// Task status, Mandatory
     pub status: TaskStatus,
+    /// Task priority, Optional
     pub priority: Option<char>,
+    /// Title, Mandatory must be unique in the same project
     pub title: String,
+    /// Inception date, Optional
     pub inception_date: Option<LocalDate>,
+    /// Completion date, Optional (requires inception date to be set)
     pub completion_date: Option<LocalDate>,
+    /// Tags, Optional
     pub tags: Tags,
-    pub dependencies: Dependencies,
+    /// Dependencies, Optional
+    pub(crate) dependencies: Dependencies,
     /// Complete with tags and dependencies
     pub description: Option<String>,
+    /// All Notes, Optional
     pub notes: Option<Notes>,
+    /// All sub-tasks, Optional
     pub sub_tasks: Option<Tasks>,
+    /// File data
     pub file_data: FileData,
+    /// Project name
     pub project: String,
 }
 
@@ -177,11 +198,16 @@ impl Task {
         };
         // Assumes indent level is a multiple of 4
         let parents_amount = indent_level.saturating_div(4);
-        // TODO: Validate the task
-        // - May only be status::done if all sub tasks are done
-        // - Title, status are not empty
-        // - project really should be set and not an option at all
-        Ok(Task {
+
+        if project.is_none() {
+            return Err(NemesisError::new(
+                "nomos::parser::task::new_from_line",
+                NomosError::Parser(Parser::Task("Task must be in a project".to_string())),
+            )
+            .add_ctx(format!("Line: {line_number} in file: {file_path:?}")));
+        }
+
+        let task = Task {
             status,
             priority,
             title: title.to_string(),
@@ -193,147 +219,10 @@ impl Task {
             notes,
             sub_tasks,
             file_data,
-            project: project.unwrap_or_default(),
+            project: project.expect("Validated above"),
             parents_amount,
-        })
-    }
-}
-
-fn make_dates<'line>(line: &'line str) -> (Option<LocalDate>, Option<LocalDate>) {
-    // Date is always: `YYYY-MM-DD` == 10 chars.
-    if line.len() < 10 {
-        (None, None)
-    } else {
-        let potential_date = &line[0..10];
-        if let Ok(date) = TryInto::<LocalDate>::try_into(potential_date) {
-            let inception_date = Some(date);
-            // There is a space between the date and the completion date
-            if line.len() >= 21 {
-                let potential_date = &line[11..21];
-                if let Ok(date) = TryInto::<LocalDate>::try_into(potential_date) {
-                    let completion_date = Some(date);
-                    (inception_date, completion_date)
-                } else {
-                    (inception_date, None)
-                }
-            } else {
-                (inception_date, None)
-            }
-        } else {
-            (None, None)
-        }
-    }
-}
-
-fn make_title<'line>(
-    line: &'line str,
-    file_path: &'line Path,
-    line_number: u32,
-) -> NomosResult<(&'line str, &'line str)> {
-    match line.split_once(" :: ") {
-        Some((title, rest_line)) => Ok((title, rest_line)),
-        None => Err(NemesisError::new(
-            "nomos::parser::task::new_from_line",
-            NomosError::Parser(Parser::Task(format!(
-                "Could not split title and description. Did not find title delimiter: ' :: ' in line: {line}."
-            )))
-        ).add_ctx(format!("Line: {line_number} in file: {file_path:?}")))
-    }
-}
-
-fn make_priority<'line>(
-    line: &'line str,
-    file_path: &'line Path,
-    line_number: u32,
-) -> NomosResult<Option<char>> {
-    if line.starts_with('(') {
-        let potential_priority = &line[1..3];
-        if potential_priority.ends_with(')') {
-            let prio = potential_priority[0..1]
-                .chars()
-                .next()
-                .expect("Priority is US-ASCII");
-            if prio.is_alphabetic() {
-                Ok(Some(prio))
-            } else {
-                return Err(NemesisError::new(
-                    "nomos::parser::task::new_from_line",
-                    NomosError::Parser(Parser::Task(format!(
-                        "Priority is not a letter. Got: {potential_priority}"
-                    ))),
-                )
-                .add_ctx(format!("Line: {line_number} in file: {file_path:?}")));
-            }
-        } else {
-            return Err(NemesisError::new(
-                "nomos::parser::task::new_from_line",
-                NomosError::Parser(Parser::Task(format!(
-                    "Found '(' in priority position but no matching ')'. Got: {line}"
-                ))),
-            )
-            .add_ctx(format!("Line: {line_number} in file: {file_path:?}")));
-        }
-    } else {
-        Ok(None)
-    }
-}
-
-fn make_status<'line>(
-    line: &'line str,
-    file_path: &'line Path,
-    line_number: u32,
-) -> NomosResult<TaskStatus> {
-    // Status is guaranteed US-ASCII and 3 chars long
-    let status = &line[0..3];
-    if status.starts_with('[') && status.ends_with(']') {
-        match status[1..2].to_lowercase().as_str() {
-            " " => Ok(TaskStatus::Open),
-            "/" => Ok(TaskStatus::InProgress),
-            "x" => Ok(TaskStatus::Done),
-            "b" => Ok(TaskStatus::Blocked),
-            "d" => Ok(TaskStatus::Deferred),
-            "c" => Ok(TaskStatus::Cut),
-            _ => {
-                return Err(NemesisError::new(
-                    "nomos::parser::task::new_from_line",
-                    NomosError::Parser(Parser::Task(format!("Unknown task status: {status}"))),
-                )
-                .add_ctx(format!("Line: {line_number} in file: {file_path:?}")));
-            }
-        }
-    } else {
-        return Err(NemesisError::new(
-            "nomos::parser::task::new_from_line",
-            NomosError::Parser(Parser::Task(format!("Unknown task status: {status}"))),
-        )
-        .add_ctx(format!("Line: {line_number} in file: {file_path:?}")));
-    }
-}
-
-fn make_line<'line>(
-    line: &'line str,
-    file_path: &'line Path,
-    line_number: u32,
-) -> NomosResult<&'line str> {
-    if let Some(line) = line.strip_prefix("- ") {
-        // Smalles task: "- [ ] a :: ". Strip prefix => "[ ] a :: " = 9 chars.
-        if line.len() < 9 {
-            return Err(NemesisError::new(
-                "nomos::parser::task::new_from_line",
-                NomosError::Parser(Parser::Task(format!(
-                    "Line {line_number} in file {file_path:?} is too short to be a task"
-                ))),
-            )
-            .add_ctx(format!("Got line: {line}")));
-        }
-        Ok(line)
-    } else {
-        return Err(NemesisError::new(
-            "nomos::parser::task::new_from_line",
-            NomosError::Parser(Parser::Task(format!(
-                "Task must begin with a '- '. Found: {line}"
-            ))),
-        )
-        .add_ctx(format!("Line: {line_number} in file: {file_path:?}")));
+        };
+        validate_task(&task)?;
+        Ok(task)
     }
 }

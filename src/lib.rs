@@ -26,7 +26,6 @@
     reason = "Ignored warnings"
 )]
 
-mod encoder;
 mod error;
 mod nomos;
 mod notes;

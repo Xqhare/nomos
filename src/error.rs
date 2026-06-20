@@ -3,19 +3,29 @@ use std::fmt;
 
 pub type NomosResult<T> = Result<T, NemesisError>;
 
+/// Error type
 #[derive(Debug)]
 pub enum NomosError {
+    /// Generic error - For development
     Generic(String),
+    /// Parser error
     Parser(Parser),
+    /// Config error
     Config(String),
+    /// Task error
     Task(String),
+    /// IO error wrapper for Nemesis compatibility
     Io(std::io::Error),
 }
 
+/// Parser error
 #[derive(Debug)]
 pub enum Parser {
+    /// Parser error during task parsing
     Task(String),
+    /// Parser error during note parsing
     Note(String),
+    /// General parser error
     General(String),
 }
 

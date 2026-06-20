@@ -1,21 +1,44 @@
 use std::{collections::BTreeMap, path::PathBuf};
 
-use athena::{Array, sorting::kahns_weighted};
-use mawu::{XffValue, read::json};
+use mawu::read::json;
 use nemesis::{NemesisError, NemesisResultExt};
 
 use crate::{
     error::{NomosError, NomosResult},
-    parser::parse_file,
+    nomos::utils::{make_paths_to_crawl, parse_tasks, sort_tasks},
     task::{Task, Tasks},
-    utils::{TaskStatus, calc_line_size, shift_task_lines_by_offset},
+    utils::{TaskStatus, calc_line_size, read_file_u8, save_file_u8, shift_task_lines_by_offset},
 };
 
+mod utils;
+
+/// The main Nomos struct
+///
+/// Construct via `Nomos::new()`.
+///
+/// To update a task, use `Nomos::update_task()`.
+///
+/// # Notes
+///
+/// This struct automatically updates the file on disk.
+///
+/// # Example
+/// ```
+/// use nomos::Nomos;
+///
+/// let mut nomos = Nomos::new("config.json");
+/// assert!(nomos.get_tasks().is_err()); // Config file does not exist
+/// ```
 pub struct Nomos {
-    pub tasks: Tasks,
+    tasks: Tasks,
 }
 
 impl Nomos {
+    /// Creates a new Nomos struct
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the config file does not exist or if it is invalid JSON
     pub fn new<P: Into<PathBuf>>(global_config_file: P) -> NomosResult<Self> {
         let global_config_file = global_config_file.into();
         let config = json(&global_config_file).add_ctx(format!(
@@ -27,6 +50,25 @@ impl Nomos {
 
         Ok(Nomos { tasks })
     }
+    /// Returns a reference to the list of tasks
+    pub fn get_tasks(&self) -> &Tasks {
+        &self.tasks
+    }
+    /// Updates a task
+    ///
+    /// # Arguments
+    ///
+    /// * `updated_task` - The task to update. Must have the same `file_data` as the task to be updated
+    ///
+    /// # Returns
+    ///
+    /// Returns `()` if the task was successfully updated
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the task does not exist.
+    /// Also errors if the passed in task does not have the same `file_data` as the task to be updated.
+    /// Lastly, errors if the shifting of subsequent tasks fails.
     ///
     /// # Notes
     ///
@@ -69,28 +111,100 @@ impl Nomos {
             )))
         }
     }
-    /// OPEN TODOs! does not update the file on disk atm
+    /// Removes a task
+    ///
+    /// # Arguments
+    ///
+    /// * `task` - The task to remove. Must have the same `file_data` as the task to be removed
+    ///
+    /// # Returns
+    ///
+    /// Returns `()` if the task was successfully removed
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the task does not exist or could not be found.
+    /// Also errors if the shifting of subsequent tasks fails.
+    ///
     /// # Notes
     ///
     /// Please note, the passed in task _must_ have the same `file_data` as the task to be updated.
     pub fn remove_task(&mut self, task: &Task) -> NomosResult<()> {
-        for t in self.tasks.iter() {
+        let mut to_remove = None;
+        let mut task_ls = 0;
+        let mut start_line = 0;
+        for (i, t) in self.tasks.iter().enumerate() {
             if t.file_data == task.file_data {
-                todo!(())
+                to_remove = Some(i);
+                task_ls = calc_line_size(&t) as i64;
+                start_line = t.file_data.line.saturating_add(task_ls as u32);
+                break;
             }
+        }
+        if let Some(i) = to_remove {
+            self.tasks.remove(i);
+            shift_task_lines_by_offset(&mut self.tasks, -task_ls, start_line)?;
         }
         Ok(())
     }
-    /// OPEN TODOs! does not update the file on disk atm
+    /// Adds a task to the end of the list
+    ///
+    /// # Arguments
+    ///
+    /// * `task` - The task to add
+    ///
+    /// # Returns
+    ///
+    /// Returns `()` if the task was successfully added
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the task already exists.
+    ///
     /// # Notes
     ///
-    /// Assumes that the passed in task has the correct lines for itself, its notes and subtasks.
+    /// New tasks are always added to the end of the list. The associated `file_data` `line` field is not updated.
+    /// The `path` field of `file_data` is assumed to be correct.
     pub fn add_task(&mut self, task: Task) -> NomosResult<()> {
+        for t in self.tasks.iter() {
+            if t.title == task.title && t.project == task.project {
+                return Err(NemesisError::new(
+                    "nomos::Nomos::add_task",
+                    NomosError::Task("Task already exists".to_string()),
+                )
+                .add_ctx(format!(
+                    "Tried to add task: {}:{} in file: {:?}",
+                    &task.project, &task.title, &task.file_data.path
+                ))
+                .add_ctx(
+                    "Should you want to update the task instead, please use Nomos::update_task(). Should you want to move the task, please use Nomos::remove_task() first.",
+                ));
+            }
+        }
+        let file_path = task.file_data.path.clone();
+        let mut file = read_file_u8(&file_path)?;
+        file.extend_from_slice(task.to_string().as_bytes());
+        save_file_u8(file_path, &file)?;
         self.tasks.push(task);
-        // TODO: Check if task title is unique, and if so, add it to the list.
-        // Check if line number is in use, if so, insert there and move all other tasks
         Ok(())
     }
+    /// Returns all tasks with the given status, sorted by Kahn's algorithm
+    ///
+    /// # Arguments
+    ///
+    /// * `status` - The status of the tasks to return
+    ///
+    /// # Returns
+    ///
+    /// Returns a list of tasks with the given status, sorted by Kahn's algorithm
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the tasks could not be sorted
+    ///
+    /// # Notes
+    ///
+    /// This function only allows for a single status at a time.
     pub fn get_tasks_by_status(&self, status: TaskStatus) -> NomosResult<Tasks> {
         let mut all_tasks: BTreeMap<String, Tasks> = BTreeMap::new();
         for task in self.tasks.iter() {
@@ -114,10 +228,29 @@ impl Nomos {
         }
         sort_tasks(all_tasks)
     }
+    /// Returns all tasks with the given priority, sorted by Kahn's algorithm
+    ///
+    /// # Arguments
+    ///
+    /// * `priority` - The priority of the tasks to return
+    ///
+    /// # Returns
+    ///
+    /// Returns a list of tasks with the given priority, sorted by Kahn's algorithm
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the tasks could not be sorted
+    ///
+    /// # Notes
+    ///
+    /// The priority search is case insensitive
     pub fn get_tasks_by_priority(&self, priority: char) -> NomosResult<Tasks> {
         let mut all_tasks: BTreeMap<String, Tasks> = BTreeMap::new();
         for task in self.tasks.iter() {
-            if task.priority == Some(priority) {
+            if let Some(task_prio) = task.priority
+                && task_prio.to_lowercase().next() == priority.to_lowercase().next()
+            {
                 if let Some(tasks) = all_tasks.get_mut(&task.project) {
                     tasks.push(task.clone());
                 } else {
@@ -137,11 +270,29 @@ impl Nomos {
         }
         sort_tasks(all_tasks)
     }
+    /// Returns all tasks with the given title, sorted by Kahn's algorithm
+    ///
+    /// # Arguments
+    ///
+    /// * `title` - The title of the tasks to return
+    ///
+    /// # Returns
+    ///
+    /// Returns a list of tasks with the given title, sorted by Kahn's algorithm
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the tasks could not be sorted
+    ///
+    /// # Notes
+    ///
+    /// The title search is case insensitive but whitespace sensitive
+    ///
     /// While task titles must be unique inside one project, they can be shared between projects. This function returns all tasks of any project matching the passed in string.
     pub fn get_tasks_by_title(&self, title: &str) -> NomosResult<Tasks> {
         let mut all_tasks: BTreeMap<String, Tasks> = BTreeMap::new();
         for task in self.tasks.iter() {
-            if task.title == title {
+            if task.title.to_lowercase().as_str() == title.to_lowercase().as_str() {
                 if let Some(tasks) = all_tasks.get_mut(&task.project) {
                     tasks.push(task.clone());
                 } else {
@@ -149,7 +300,7 @@ impl Nomos {
                 }
             } else {
                 for sub_task in task.sub_tasks.as_ref().unwrap().iter() {
-                    if sub_task.title == title {
+                    if sub_task.title.to_lowercase().as_str() == title.to_lowercase().as_str() {
                         if let Some(tasks) = all_tasks.get_mut(&task.project) {
                             tasks.push(sub_task.clone());
                         } else {
@@ -161,10 +312,27 @@ impl Nomos {
         }
         sort_tasks(all_tasks)
     }
+    /// Returns all tasks with the given project, sorted by Kahn's algorithm
+    ///
+    /// # Arguments
+    ///
+    /// * `project` - The project name of the tasks to return
+    ///
+    /// # Returns
+    ///
+    /// Returns a list of tasks with the given project, sorted by Kahn's algorithm
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the tasks could not be sorted
+    ///
+    /// # Notes
+    ///
+    /// The project search is case insensitive
     pub fn get_tasks_by_project(&self, project: &str) -> NomosResult<Tasks> {
         let mut all_tasks: BTreeMap<String, Tasks> = BTreeMap::new();
         for task in self.tasks.iter() {
-            if task.project == project {
+            if task.project.to_lowercase().as_str() == project.to_lowercase().as_str() {
                 if let Some(tasks) = all_tasks.get_mut(&task.project) {
                     tasks.push(task.clone());
                 } else {
@@ -175,6 +343,23 @@ impl Nomos {
         }
         sort_tasks(all_tasks)
     }
+    /// Returns all tasks with the given tags, sorted by Kahn's algorithm
+    ///
+    /// # Arguments
+    ///
+    /// * `tags` - The tags of the tasks to return. Each tag must have the leading `#`, `@`, or
+    /// `+` marker
+    ///
+    /// # Returns
+    ///
+    /// Returns a list of tasks with the given tags, sorted by Kahn's algorithm
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the tasks could not be sorted
+    ///
+    /// # Notes
+    ///
     /// Expects a `Vec<String>` with each element representing a tag. Each element must have
     /// the leading `#`, `@`, or `+`
     pub fn get_tasks_by_tags(&self, tags: Vec<String>) -> NomosResult<Tasks> {
@@ -226,6 +411,23 @@ impl Nomos {
         }
         sort_tasks(all_tasks)
     }
+    /// Returns all tasks with the given kind, sorted by Kahn's algorithm
+    ///
+    /// # Arguments
+    ///
+    /// * `kind` - The kind of the tasks to return. Must not have the leading `+` marker
+    ///
+    /// # Returns
+    ///
+    /// Returns a list of tasks with the given kind, sorted by Kahn's algorithm
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the tasks could not be sorted
+    ///
+    /// # Notes
+    ///
+    /// The kind search is case sensitive, and requires the leading `+` marker
     pub fn get_tasks_by_kind(&self, kind: &str) -> NomosResult<Tasks> {
         let mut all_tasks: BTreeMap<String, Tasks> = BTreeMap::new();
         for task in self.tasks.iter() {
@@ -261,6 +463,23 @@ impl Nomos {
         }
         sort_tasks(all_tasks)
     }
+    /// Returns all tasks with the given location, sorted by Kahn's algorithm
+    ///
+    /// # Arguments
+    ///
+    /// * `location` - The location of the tasks to return. Must not have the leading `@` marker
+    ///
+    /// # Returns
+    ///
+    /// Returns a list of tasks with the given location, sorted by Kahn's algorithm
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the tasks could not be sorted
+    ///
+    /// # Notes
+    ///
+    /// The location search is case sensitive, and requires the leading `@` marker
     pub fn get_tasks_by_location(&self, location: &str) -> NomosResult<Tasks> {
         let mut all_tasks: BTreeMap<String, Tasks> = BTreeMap::new();
         for task in self.tasks.iter() {
@@ -296,6 +515,23 @@ impl Nomos {
         }
         sort_tasks(all_tasks)
     }
+    /// Returns all tasks with the given generic tag, sorted by Kahn's algorithm
+    ///
+    /// # Arguments
+    ///
+    /// * `tag` - The generic tag of the tasks to return. Must not have the leading `#` marker
+    ///
+    /// # Returns
+    ///
+    /// Returns a list of tasks with the given generic tag, sorted by Kahn's algorithm
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the tasks could not be sorted
+    ///
+    /// # Notes
+    ///
+    /// The generic tag search is case sensitive, and requires the leading `#` marker
     pub fn get_tasks_by_generic_tag(&self, tag: &str) -> NomosResult<Tasks> {
         let mut all_tasks: BTreeMap<String, Tasks> = BTreeMap::new();
         for task in self.tasks.iter() {
@@ -330,232 +566,5 @@ impl Nomos {
             }
         }
         sort_tasks(all_tasks)
-    }
-}
-
-fn parse_tasks(
-    paths_to_crawl: Vec<(String, Vec<PathBuf>)>,
-) -> NomosResult<BTreeMap<String, Tasks>> {
-    let mut all_project_tasks: BTreeMap<String, Tasks> = BTreeMap::new();
-    for (project_name, paths) in paths_to_crawl {
-        for path in paths {
-            if let Some(tasks) = all_project_tasks.get_mut(&project_name) {
-                tasks.extend(parse_file(&path, Some(project_name.clone()))?);
-            } else {
-                all_project_tasks.insert(
-                    project_name.clone(),
-                    parse_file(&path, Some(project_name.clone()))?,
-                );
-            }
-        }
-    }
-    Ok(all_project_tasks)
-}
-
-/// Expects `all_project_tasks` to be `String = project_name, Vec<Task> = tasks`
-fn sort_tasks(all_project_tasks: BTreeMap<String, Tasks>) -> NomosResult<Tasks> {
-    // Kahn's algorithm, modified for weighted tasks. The lower the weight, the higher the
-    // priority. 0 is the highest, 255 is the lowest
-    // Why: As prio is a valid 7bit ASCII char and A (highest) - Z (lowest) ordering is desired
-    let kahn_input = {
-        // Only assumes 4 tasks per project on average; should be fine but will lead
-        // to some allocations
-        let mut kahn_input: Vec<(String, u8, Vec<String>)> =
-            Vec::with_capacity(all_project_tasks.len().saturating_mul(4));
-        for (project_name, tasks) in all_project_tasks.iter() {
-            for task in tasks.iter() {
-                let dep_iter = task.dependencies.iter();
-                let mut dependencies: Vec<String> = Vec::with_capacity(dep_iter.size_hint().0);
-                for dependency in dep_iter {
-                    let complete_name = format!("{project_name}:{}", dependency.title);
-                    dependencies.push(complete_name);
-                }
-                let task_name = format!("{project_name}:{}", task.title);
-                let prio: u8 = if let Some(prio) = task.priority {
-                    prio as u8
-                } else {
-                    255
-                };
-                kahn_input.push((task_name, prio, dependencies));
-            }
-        }
-        kahn_input
-    };
-    let kahn_in: Vec<(&str, u8, Vec<&str>)> = kahn_input
-        .iter()
-        .map(|(a, u, b)| (a.as_str(), *u, b.iter().map(|s| s.as_str()).collect()))
-        .collect();
-    let sorted = match kahns_weighted(&kahn_in) {
-        Ok(v) => v,
-        Err(e) => {
-            return Err(NemesisError::new("nomos::Nomos::new", e)
-                .add_ctx("Sorting using Kahn's algorythm failed"));
-        }
-    };
-    let mut sorted_tasks: Vec<Task> = Vec::with_capacity(sorted.len());
-    for task_name in sorted {
-        let (project_name, task_name) = task_name.split_once(':').unwrap();
-        if let Some(tasks) = all_project_tasks.get(project_name) {
-            for task in tasks.iter() {
-                if task.title == task_name {
-                    sorted_tasks.push(task.clone());
-                }
-            }
-        }
-    }
-    Ok(sorted_tasks.into())
-}
-
-fn make_paths_to_crawl(config: &XffValue) -> NomosResult<Vec<(String, Vec<PathBuf>)>> {
-    let search_base = make_search_base(config)?;
-    let mut out: Vec<(String, Vec<PathBuf>)> =
-        Vec::with_capacity(search_base.len().saturating_mul(2)); // Should overallocate by quite a margin
-    for base in search_base.iter() {
-        let base_path: PathBuf = base.to_string().into();
-        if !base_path.exists() {
-            return Err(NemesisError::new(
-                "nomos::make_paths_to_crawl",
-                NomosError::Config(format!(
-                    "Invalid global config: Search base {base} does not exist"
-                )),
-            )
-            .add_ctx(format!("Got global config: {config}")));
-        }
-        make_project_paths(&base_path, &mut out)?;
-    }
-    out.shrink_to_fit();
-    Ok(out)
-}
-
-fn make_project_paths(
-    base_path: &PathBuf,
-    out: &mut Vec<(String, Vec<PathBuf>)>,
-) -> NomosResult<()> {
-    let mut tmp: Vec<PathBuf> = Vec::new();
-    let project_name = if let Some(name) = base_path.file_name() {
-        name.to_string_lossy().to_string()
-    } else {
-        return Err(NemesisError::new(
-            "nomos::make_paths_to_crawl::make_project_paths",
-            NomosError::Config(format!(
-                "Invalid global config: Search base {:?} does not contain a project name",
-                base_path
-            )),
-        ));
-    };
-    if let Ok(file) = json(base_path.join("nomos.json")) {
-        if let Some(obj) = file.as_object()
-            && let Some(task_files) = obj.get("task_files")
-            && let Some(file_arr) = task_files.as_array()
-        {
-            if file_arr.iter().find(|v| !v.is_string()).is_some() {
-                return Err(NemesisError::new(
-                    "nomos::make_paths_to_crawl::make_project_paths",
-                    NomosError::Config(format!(
-                        "Invalid global config: Search base {:?} contains invalid task files",
-                        base_path
-                    )),
-                ));
-            }
-            for file in file_arr.iter() {
-                let potential_path = base_path.join(file.to_string());
-                if potential_path.exists() {
-                    tmp.push(potential_path);
-                } else {
-                    return Err(NemesisError::new(
-                        "nomos::make_paths_to_crawl::make_project_paths",
-                        NomosError::Config(format!(
-                            "Invalid global config: Search base {:?} contains invalid task file inside project: {project_name}. File does not exist: {:?}",
-                            base_path, potential_path
-                        )),
-                    ));
-                }
-            }
-        }
-    } else {
-        // TODO: add to doc: Only dirs with a standard project marker are considered
-        if base_path.join(".git").exists() || base_path.join("README.md").exists() {
-            for file in ["nomos", "todo", "tasks", "roadmap"] {
-                for extension in ["txt", "md"] {
-                    let path = PathBuf::from(base_path.join(format!("{file}.{extension}")));
-                    match base_path.read_dir() {
-                        Err(err) => {
-                            return Err(NemesisError::new(
-                                "nomos::make_paths_to_crawl::make_project_paths",
-                                err,
-                            )
-                            .add_ctx(format!("Cannot read project directory: {base_path:?}")));
-                        }
-                        Ok(inner_files) => {
-                            for inner_file in inner_files {
-                                match inner_file {
-                                    Err(_) => (),
-                                    Ok(inner_file) => {
-                                        if inner_file
-                                            .path()
-                                            .to_string_lossy()
-                                            .to_lowercase()
-                                            .eq(&path)
-                                        {
-                                            tmp.push(inner_file.path());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            if tmp.is_empty() {
-                return Err(NemesisError::new(
-                    "nomos::make_paths_to_crawl::make_project_paths",
-                    NomosError::Config(format!(
-                        "Invalid global config: Search base {:?} does not contain a nomos.json file",
-                        base_path
-                    )),
-                ));
-            }
-        }
-    }
-    out.push((project_name, tmp));
-    Ok(())
-}
-
-/// Validates the global config and returns the search bases
-fn make_search_base(config: &XffValue) -> NomosResult<Array> {
-    if let Some(obj) = config.as_object()
-        && let Some(bases) = obj.get("search_bases")
-    {
-        if let Some(arr) = bases.as_array() {
-            if arr.iter().find(|v| !v.is_string()).is_some() {
-                return Err(NemesisError::new(
-                    "nomos::make_paths_to_crawl",
-                    NomosError::Config(
-                        "Invalid global config: Key 'search_bases' exists, but the value is not an array of strings"
-                            .to_string(),
-                    ),
-                )
-                .add_ctx(format!("Got global config: {config}")));
-            }
-            Ok(arr.clone())
-        } else {
-            Err(NemesisError::new(
-                    "nomos::make_paths_to_crawl",
-                    NomosError::Config(
-                        "Invalid global config: Key 'search_bases' exists, but the value is not an array".to_string(),
-                    ),
-                )
-                .add_ctx(format!("Got global config: {config}")))
-        }
-    } else {
-        return Err(NemesisError::new(
-            "nomos::make_paths_to_crawl",
-            NomosError::Config("Nomos failed to find search_bases in global config".to_string()),
-        )
-        .add_ctx(
-            "Valid global config file was found, but it is missing the key: 'search_bases'"
-                .to_string(),
-        ))
-        .add_ctx(format!("Global config: {config}"));
     }
 }

@@ -59,6 +59,30 @@ pub fn read_file<P: AsRef<Path>>(path: P) -> NomosResult<String> {
     }
 }
 
+pub fn read_file_u8<P: AsRef<Path>>(path: P) -> NomosResult<Vec<u8>> {
+    match std::fs::read(path.as_ref()) {
+        Ok(content) => Ok(content),
+        Err(err) => Err(
+            NemesisError::new("nomos::utils::read_file", err).add_ctx(&format!(
+                "Failed to read and cast into a Vec<u8>. File path: {:?}",
+                path.as_ref()
+            )),
+        ),
+    }
+}
+
+pub fn save_file_u8<P: AsRef<Path>>(path: P, content: &[u8]) -> NomosResult<()> {
+    match std::fs::write(path.as_ref(), content) {
+        Ok(_) => Ok(()),
+        Err(err) => Err(
+            NemesisError::new("nomos::utils::save_file", err).add_ctx(&format!(
+                "Failed to write to file. File path: {:?}",
+                path.as_ref()
+            )),
+        ),
+    }
+}
+
 /// Splits a line by whitespace, also supports the POSIX double quoted string syntax
 pub fn split_into_words(line: &str) -> Vec<String> {
     let mut words = Vec::new();
