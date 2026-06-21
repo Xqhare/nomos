@@ -16,6 +16,7 @@ pub enum NomosError {
     Task(String),
     /// IO error wrapper for Nemesis compatibility
     Io(std::io::Error),
+    CLI(String),
 }
 
 /// Parser error

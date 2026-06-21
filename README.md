@@ -5,6 +5,10 @@ The base for my project management solution
 It follows my "All code written by me or part of rust's standard library and libc" philosophy.
 You can learn more about that [here](https://blog.xqhare.net/posts/why_solve_problems/).
 
+## Roadmap
+
+- [ ] Support to specify specific files inside the global config file
+
 ## Features
 
 - _**No dependencies**_: All code is written by me or part of std.

@@ -34,7 +34,7 @@ mod tags;
 mod task;
 mod utils;
 
-pub use error::NomosError;
+pub use error::{NomosError, NomosResult};
 pub use nomos::Nomos;
 /// Prelude
 ///
