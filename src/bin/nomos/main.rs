@@ -4,6 +4,7 @@
 
 use crate::startup::startup;
 
+mod cli;
 mod startup;
 
 fn main() {

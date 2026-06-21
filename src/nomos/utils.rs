@@ -102,8 +102,61 @@ pub fn make_paths_to_crawl(config: &XffValue) -> NomosResult<Vec<(String, Vec<Pa
         }
         make_project_paths(&base_path, &mut out)?;
     }
+    make_file_paths(config, &mut out)?;
     out.shrink_to_fit();
     Ok(out)
+}
+
+fn make_file_paths(config: &XffValue, out: &mut Vec<(String, Vec<PathBuf>)>) -> NomosResult<()> {
+    if let Some(obj) = config.as_object()
+        && let Some(files) = obj.get("files")
+        && let Some(inner_files) = files.as_object()
+    {
+        if !inner_files.is_empty() {
+            'file_loop: for (project_name, file_path) in inner_files.iter() {
+                if let Some(entry) = out.iter_mut().find(|(s, _)| s == project_name) {
+                    for path in entry.1 {
+                        if path == file_path.as_string().into() {
+                            continue 'file_loop;
+                        }
+                    }
+                    let file_path: PathBuf = file_path.as_string().into();
+                    if file_path.exists() {
+                        entry.1.push(file_path);
+                    } else {
+                        return Err(NemesisError::new(
+                            "nomos::make_paths_to_crawl::make_file_paths",
+                            NomosError::Config(format!(
+                                "Invalid global config files path: {:?} does not exist.",
+                                file_path
+                            )),
+                        ));
+                    }
+                } else {
+                    let file_path: PathBuf = file_path.as_string().into();
+                    if file_path.exists() {
+                        out.push((project_name.clone(), vec![file_path]));
+                    } else {
+                        return Err(NemesisError::new(
+                            "nomos::make_paths_to_crawl::make_file_paths",
+                            NomosError::Config(format!(
+                                "Invalid global config files path: {:?} does not exist.",
+                                file_path
+                            )),
+                        ));
+                    }
+                }
+            }
+        }
+        Ok(())
+    } else {
+        return Err(NemesisError::new(
+            "nomos::make_paths_to_crawl::make_file_paths",
+            NomosError::Config(format!(
+                "Invalid global config. config not an object, or doesnt contain the key `files` holding another object value.",
+            )),
+        ));
+    }
 }
 
 fn make_project_paths(
@@ -117,7 +170,7 @@ fn make_project_paths(
         return Err(NemesisError::new(
             "nomos::make_paths_to_crawl::make_project_paths",
             NomosError::Config(format!(
-                "Invalid global config: Search base {:?} does not contain a project name",
+                "Invalid global config: Search base path {:?} does not contain a project name",
                 base_path
             )),
         ));

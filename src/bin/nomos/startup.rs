@@ -42,14 +42,24 @@ fn make_and_get_config() -> NomosResult<XffValue> {
     let root = make_base_dir().add_ctx("Failed to make base dir during CLI startup.")?;
     let brigid = Brigid::new(root)
         .file("config.json", |file| {
-            file.with_default_content(Content::JSON(XffValue::from(
-                Object::new().push("search_bases", vec![].into()),
-            )))
-            .with_fallback();
+            file.with_default_content(Content::JSON(make_default_config()))
+                .with_fallback();
         })
         .add_license(include_str!("../../LICENSE"), root.join("LICENSE"))
         .establish()?;
     validate_config(brigid.get_file("config.json")?)
+}
+
+fn make_default_config() -> XffValue {
+    let mut obj = Object::new();
+    obj.insert("search_bases", vec!["complete/path/to/dir".into()].into());
+    obj.insert(
+        "files",
+        Object::new()
+            .insert("project_name", "complete/path/to/file.md")
+            .into(),
+    );
+    obj.into()
 }
 
 /// Make the base directory path.
