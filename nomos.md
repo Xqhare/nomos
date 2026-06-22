@@ -1,0 +1,7 @@
+- [ ] Doc updates :: 
+    - [ ] Only dirs with standard project markers are considered as projects @nomos/utils.rs
+- [ ] Subcommands
+    - [ ] Add TUI subcommand :: @bin/nomos/cli dep=talos:"State rework"
+        * At a later stage, a lot of work -> Looking at ananke, a large part could be reused, or at least copied and modified
+    - [ ] Refactor subcommand executions :: They share a lot of common code. @bin/nomos/cli
+
