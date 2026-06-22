@@ -114,13 +114,13 @@ fn make_file_paths(config: &XffValue, out: &mut Vec<(String, Vec<PathBuf>)>) -> 
     {
         if !inner_files.is_empty() {
             'file_loop: for (project_name, file_path) in inner_files.iter() {
+                let file_path: PathBuf = file_path.to_string().into();
                 if let Some(entry) = out.iter_mut().find(|(s, _)| s == project_name) {
-                    for path in entry.1 {
-                        if path == file_path.as_string().into() {
+                    for path in &entry.1 {
+                        if path == &file_path {
                             continue 'file_loop;
                         }
                     }
-                    let file_path: PathBuf = file_path.as_string().into();
                     if file_path.exists() {
                         entry.1.push(file_path);
                     } else {
@@ -133,7 +133,6 @@ fn make_file_paths(config: &XffValue, out: &mut Vec<(String, Vec<PathBuf>)>) -> 
                         ));
                     }
                 } else {
-                    let file_path: PathBuf = file_path.as_string().into();
                     if file_path.exists() {
                         out.push((project_name.clone(), vec![file_path]));
                     } else {

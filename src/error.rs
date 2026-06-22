@@ -1,6 +1,7 @@
 use nemesis::NemesisError;
 use std::fmt;
 
+/// Result type
 pub type NomosResult<T> = Result<T, NemesisError>;
 
 /// Error type
@@ -16,6 +17,7 @@ pub enum NomosError {
     Task(String),
     /// IO error wrapper for Nemesis compatibility
     Io(std::io::Error),
+    /// CLI error
     CLI(String),
 }
 
@@ -43,6 +45,7 @@ impl fmt::Display for Parser {
 impl fmt::Display for NomosError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            NomosError::CLI(msg) => write!(f, "{msg}"),
             NomosError::Task(msg) => write!(f, "{msg}"),
             NomosError::Config(msg) => write!(f, "{msg}"),
             NomosError::Parser(msg) => write!(f, "{msg}"),
@@ -57,6 +60,7 @@ impl std::error::Error for NomosError {
         match self {
             NomosError::Generic(_)
             | NomosError::Parser(_)
+            | NomosError::CLI(_)
             | NomosError::Task(_)
             | NomosError::Config(_) => None,
             NomosError::Io(err) => Some(err),

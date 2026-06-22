@@ -9,14 +9,22 @@ use nomos::{NomosError, NomosResult};
 
 pub struct Startup {
     pub config: XffValue,
+    pub global_config_file: PathBuf,
 }
 
 pub fn startup() -> NomosResult<Startup> {
-    let config = make_and_get_config().add_ctx("Startup of CLI failed during config getting.")?;
-    Ok(Startup { config })
+    let (config, global_config_file) =
+        make_and_get_config().add_ctx("Startup of CLI failed during config getting.")?;
+    Ok(Startup {
+        config,
+        global_config_file,
+    })
 }
 
-fn validate_config(config: XffValue) -> NomosResult<XffValue> {
+fn validate_config(
+    config: XffValue,
+    global_config_file: PathBuf,
+) -> NomosResult<(XffValue, PathBuf)> {
     if let Some(obj) = config.as_object() {
         if obj.get("search_bases").is_none() {
             Err(NemesisError::new(
@@ -27,7 +35,7 @@ fn validate_config(config: XffValue) -> NomosResult<XffValue> {
             )
             .add_ctx(format!("Got global config: {config}")))
         } else {
-            Ok(config)
+            Ok((config, global_config_file))
         }
     } else {
         Err(NemesisError::new(
@@ -38,27 +46,28 @@ fn validate_config(config: XffValue) -> NomosResult<XffValue> {
     }
 }
 
-fn make_and_get_config() -> NomosResult<XffValue> {
+/// Returns the path to the global config file as well as the config itself
+fn make_and_get_config() -> NomosResult<(XffValue, PathBuf)> {
     let root = make_base_dir().add_ctx("Failed to make base dir during CLI startup.")?;
-    let brigid = Brigid::new(root)
+    let brigid = Brigid::new(&root)
         .file("config.json", |file| {
             file.with_default_content(Content::JSON(make_default_config()))
                 .with_fallback();
         })
-        .add_license(include_str!("../../LICENSE"), root.join("LICENSE"))
+        .add_license(include_str!("../../../LICENSE"), root.join("LICENSE"))
         .establish()?;
-    validate_config(brigid.get_file("config.json")?)
+    validate_config(brigid.get_file("config.json")?, root.join("config.json"))
 }
 
 fn make_default_config() -> XffValue {
+    let mut files_obj = Object::new();
+    files_obj.insert("project_name", XffValue::from("complete/path/to/file.md"));
     let mut obj = Object::new();
-    obj.insert("search_bases", vec!["complete/path/to/dir".into()].into());
     obj.insert(
-        "files",
-        Object::new()
-            .insert("project_name", "complete/path/to/file.md")
-            .into(),
+        "search_bases",
+        XffValue::from(vec![XffValue::from("complete/path/to/dir")]),
     );
+    obj.insert("files", XffValue::from(files_obj));
     obj.into()
 }
 

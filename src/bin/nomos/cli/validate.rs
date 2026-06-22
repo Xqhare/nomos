@@ -6,17 +6,19 @@ use crate::write_err_and_exit;
 
 pub struct Validate {
     global_config_file: PathBuf,
+    flags: Vec<eshu::CliFlag>,
 }
 
 impl Validate {
     pub fn new<P: Into<PathBuf>>(global_config_file: P) -> Self {
         Validate {
             global_config_file: global_config_file.into(),
+            flags: vec![],
         }
     }
 }
 
-impl CliCommand for Validate {
+impl<'c> CliCommand<'c> for Validate {
     fn name(&self) -> String {
         "validate".to_string()
     }
@@ -29,13 +31,13 @@ impl CliCommand for Validate {
         )
     }
     fn flags(&self) -> &Vec<eshu::CliFlag> {
-        &vec![]
+        &self.flags
     }
     fn subcommands(&self) -> Vec<std::rc::Rc<dyn CliCommand<'c>>> {
         vec![]
     }
     fn execute(&self, _cli: &eshu::Cli<'c>) {
-        match nomos::Nomos::new(self.global_config_file) {
+        match nomos::Nomos::new(&self.global_config_file) {
             Ok(_) => {
                 println!("Nomos validation pass succesful!");
                 exit(0)

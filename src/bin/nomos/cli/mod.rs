@@ -4,22 +4,33 @@ use eshu::Cli;
 use nemesis::NemesisResultExt;
 use nomos::NomosResult;
 
-use crate::cli::validate::Validate;
+use crate::cli::{all::All, next::Next, validate::Validate};
 
 mod all;
+mod flags;
 mod next;
 mod validate;
 
-pub fn cli<P: Into<PathBuf>>(global_config_file: P) -> NomosResult<Cli> {
-    let mut cli = Cli::new("Nomos")
+// TODO: The different `execute` functions share *a lot* of common code.
+// This should be abstracted out.
+
+pub fn cli<'c, P: Into<PathBuf>>(global_config_file: P) -> NomosResult<Cli<'c>> {
+    let global_config_file = global_config_file.into();
+    let cli = Cli::new("Nomos")
         .with_version(env!("CARGO_PKG_VERSION"))
         .with_about(&make_about())
-        .add_command(Rc::new(Validate::new(global_config_file)))
+        .add_command(Rc::new(Validate::new(&global_config_file)))
+        .add_command(Rc::new(All::new(&global_config_file)))
+        .add_command(Rc::new(Next::new(&global_config_file)))
         .try_parse()
         .add_ctx("Error during Nomos startup: cli creation / parsing")?;
     Ok(cli)
 }
 
+#[expect(
+    clippy::too_many_lines,
+    reason = "writing about page is a lot of static text"
+)]
 fn make_about() -> String {
     const LINEBREAK: &str = "\n";
     const DOUBLE_LINEBREAK: &str = "\n\n";
