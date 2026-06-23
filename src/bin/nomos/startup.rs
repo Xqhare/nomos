@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, process::exit};
 
 use areia::{BaseDirs, Hidden};
 use athena::Object;
@@ -8,7 +8,11 @@ use nemesis::{NemesisError, NemesisResultExt};
 use nomos::{NomosError, NomosResult};
 
 pub struct Startup {
-    pub config: XffValue,
+    /// Will probably be used in TUI later
+    pub _config: XffValue,
+    /// The global config file
+    ///
+    /// Either `~/.config/nomos/config.json` or `~/.nomos/config.json`
     pub global_config_file: PathBuf,
 }
 
@@ -16,15 +20,34 @@ pub fn startup() -> NomosResult<Startup> {
     let (config, global_config_file) =
         make_and_get_config().add_ctx("Startup of CLI failed during config getting.")?;
     Ok(Startup {
-        config,
+        _config: config,
         global_config_file,
     })
+}
+
+fn print_init_done(global_config_file: PathBuf) {
+    println!("");
+    println!("Nomos successfully installed!");
+    println!("");
+    println!("Config file: {global_config_file:?}");
+    println!("");
+    println!("Please update your global config file with your project paths.");
+    println!("");
+    println!(
+        "Afterwards, run `nomos validate` to validate your config and project specific setups."
+    );
+    println!("Also available is `nomos next` and `nomos all` to show the next tasks to work on.");
+    println!("");
 }
 
 fn validate_config(
     config: XffValue,
     global_config_file: PathBuf,
 ) -> NomosResult<(XffValue, PathBuf)> {
+    if config == make_default_config() {
+        print_init_done(global_config_file);
+        exit(0);
+    }
     if let Some(obj) = config.as_object() {
         if obj.get("search_bases").is_none() {
             Err(NemesisError::new(

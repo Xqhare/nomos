@@ -39,7 +39,13 @@ pub fn make_title<'line>(
     file_path: &'line Path,
     line_number: u32,
 ) -> NomosResult<(&'line str, &'line str)> {
-    match line.split_once(" :: ") {
+    let mut match_pattern = " :: ";
+    // Slight relaxation of the parsing rules for small tasks with no following description
+    // Easy to forget a space at the end; Intent should be clear enough
+    if line.ends_with(" ::") {
+        match_pattern = " ::";
+    }
+    match line.split_once(match_pattern) {
         Some((title, rest_line)) => Ok((title, rest_line)),
         None => Err(NemesisError::new(
             "nomos::parser::task::new_from_line",
