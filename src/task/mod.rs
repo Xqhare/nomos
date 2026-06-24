@@ -120,7 +120,9 @@ impl Display for Task {
             write!(f, "\n")?;
             write!(f, "{}", padding(self.parents_amount.wrapping_mul(4)))?;
             write!(f, "{}", self.title)?;
-            if let Some(description) = &self.description {
+            if let Some(description) = &self.description
+                && !description.is_empty()
+            {
                 write!(f, "\n")?;
                 let pad = if self.parents_amount == 0 {
                     2
