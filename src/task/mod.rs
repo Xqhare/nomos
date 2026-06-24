@@ -120,11 +120,9 @@ impl Display for Task {
             write!(f, "\n")?;
             write!(f, "{}", padding(self.parents_amount.wrapping_mul(4)))?;
             write!(f, "{}", self.title)?;
-            let mut has_description = false;
             if let Some(description) = &self.description
                 && !description.is_empty()
             {
-                has_description = true;
                 write!(f, "\n")?;
                 let pad = if self.parents_amount == 0 {
                     2
@@ -137,25 +135,24 @@ impl Display for Task {
             if let Some(notes) = &self.notes
                 && !notes.iter().count().eq(&0)
             {
-                if has_description {
-                    write!(f, "\n")?;
-                    has_description = false; // Bodge job
-                }
-                for note in notes.iter() {
+                write!(f, "\n")?;
+                for (i, note) in notes.iter().enumerate() {
                     write!(f, "{}", padding(self.parents_amount.wrapping_mul(8)))?;
                     write!(f, "* {}", note.text)?;
-                    write!(f, "\n")?;
+                    if !i.eq(&notes.iter().count().saturating_sub(1)) {
+                        write!(f, "\n")?;
+                    }
                 }
             }
             if let Some(sub_tasks) = &self.sub_tasks
                 && !sub_tasks.iter().count().eq(&0)
             {
-                if has_description {
-                    write!(f, "\n")?;
-                }
-                for sub_task in sub_tasks.iter() {
+                write!(f, "\n")?;
+                for (i, sub_task) in sub_tasks.iter().enumerate() {
                     write!(f, "{:#}", sub_task)?;
-                    write!(f, "\n")?;
+                    if !i.eq(&sub_tasks.iter().count().saturating_sub(1)) {
+                        write!(f, "\n")?;
+                    }
                 }
             }
         } else {
