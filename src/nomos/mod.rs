@@ -215,12 +215,15 @@ impl Nomos {
                     all_tasks.insert(task.project.clone(), vec![task.clone()].into());
                 }
             } else {
-                for sub_task in task.sub_tasks.as_ref().unwrap().iter() {
-                    if sub_task.status == status {
-                        if let Some(tasks) = all_tasks.get_mut(&task.project) {
-                            tasks.push(sub_task.clone());
-                        } else {
-                            all_tasks.insert(task.project.clone(), vec![sub_task.clone()].into());
+                if task.sub_tasks.is_some() {
+                    for sub_task in task.sub_tasks.as_ref().unwrap().iter() {
+                        if sub_task.status == status {
+                            if let Some(tasks) = all_tasks.get_mut(&task.project) {
+                                tasks.push(sub_task.clone());
+                            } else {
+                                all_tasks
+                                    .insert(task.project.clone(), vec![sub_task.clone()].into());
+                            }
                         }
                     }
                 }
@@ -257,12 +260,15 @@ impl Nomos {
                     all_tasks.insert(task.project.clone(), vec![task.clone()].into());
                 }
             } else {
-                for sub_task in task.sub_tasks.as_ref().unwrap().iter() {
-                    if sub_task.priority == Some(priority) {
-                        if let Some(tasks) = all_tasks.get_mut(&task.project) {
-                            tasks.push(sub_task.clone());
-                        } else {
-                            all_tasks.insert(task.project.clone(), vec![sub_task.clone()].into());
+                if task.sub_tasks.is_some() {
+                    for sub_task in task.sub_tasks.as_ref().unwrap().iter() {
+                        if sub_task.priority == Some(priority) {
+                            if let Some(tasks) = all_tasks.get_mut(&task.project) {
+                                tasks.push(sub_task.clone());
+                            } else {
+                                all_tasks
+                                    .insert(task.project.clone(), vec![sub_task.clone()].into());
+                            }
                         }
                     }
                 }
@@ -299,12 +305,15 @@ impl Nomos {
                     all_tasks.insert(task.project.clone(), vec![task.clone()].into());
                 }
             } else {
-                for sub_task in task.sub_tasks.as_ref().unwrap().iter() {
-                    if sub_task.title.to_lowercase().as_str() == title.to_lowercase().as_str() {
-                        if let Some(tasks) = all_tasks.get_mut(&task.project) {
-                            tasks.push(sub_task.clone());
-                        } else {
-                            all_tasks.insert(task.project.clone(), vec![sub_task.clone()].into());
+                if task.sub_tasks.is_some() {
+                    for sub_task in task.sub_tasks.as_ref().unwrap().iter() {
+                        if sub_task.title.to_lowercase().as_str() == title.to_lowercase().as_str() {
+                            if let Some(tasks) = all_tasks.get_mut(&task.project) {
+                                tasks.push(sub_task.clone());
+                            } else {
+                                all_tasks
+                                    .insert(task.project.clone(), vec![sub_task.clone()].into());
+                            }
                         }
                     }
                 }

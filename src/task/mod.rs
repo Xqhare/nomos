@@ -90,38 +90,119 @@ pub struct Task {
     pub project: String,
 }
 
+/// Display implementation
+///
+/// Implements standard `{}` formatting as nomos compliant, and `{#}` formatting as a pretty string
+/// for display in the terminal
 impl Display for Task {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", padding(self.parents_amount.wrapping_mul(4)))?;
-        match self.status {
-            TaskStatus::Open => write!(f, "- [ ] ")?,
-            TaskStatus::InProgress => write!(f, "- [/] ")?,
-            TaskStatus::Done => write!(f, "- [x] ")?,
-            TaskStatus::Blocked => write!(f, "- [B] ")?,
-            TaskStatus::Deferred => write!(f, "- [D] ")?,
-            TaskStatus::Cut => write!(f, "- [C] ")?,
-        };
-        if let Some(char) = self.priority {
-            write!(f, "({char}) ")?;
-        };
-        write!(f, "{}", self.title)?;
-        write!(f, " :: ")?;
-        if let Some(inception_date) = self.inception_date {
-            write!(f, "{} ", inception_date.to_string())?;
-        }
-        if let Some(completion_date) = self.completion_date
-            && self.status == TaskStatus::Done
-        {
-            write!(f, "{} ", completion_date.to_string())?;
-        }
-        if let Some(description) = &self.description {
-            write!(f, "\n{}", description)?;
+        if f.alternate() {
+            match self.status {
+                TaskStatus::Open => write!(f, " [ ] <Open>")?,
+                TaskStatus::InProgress => write!(f, " [/] <In Progress>")?,
+                TaskStatus::Done => write!(f, " [x] <Done>")?,
+                TaskStatus::Blocked => write!(f, " [B] <Blocked>")?,
+                TaskStatus::Deferred => write!(f, " [D] <Deferred>")?,
+                TaskStatus::Cut => write!(f, " [C] <Cut>")?,
+            };
+            if let Some(prio) = self.priority {
+                write!(f, " Priority {prio}")?;
+            };
+            if let Some(inception_date) = self.inception_date {
+                write!(f, " Inception date: {inception_date}")?;
+            }
+            if let Some(completion_date) = self.completion_date
+                && self.status == TaskStatus::Done
+            {
+                write!(f, " Completion date: {completion_date}")?;
+            }
+            write!(f, "\n")?;
+            write!(f, "{}", padding(self.parents_amount.wrapping_mul(4)))?;
+            write!(f, "{}", self.title)?;
+            if let Some(description) = &self.description {
+                write!(f, "\n")?;
+                write!(f, "{}", padding(self.parents_amount.wrapping_mul(6)))?;
+                write!(f, "{}", description)?;
+            }
+            if let Some(notes) = &self.notes
+                && !notes.iter().count().eq(&0)
+            {
+                write!(f, "\n")?;
+                for note in notes.iter() {
+                    write!(f, "{}", padding(self.parents_amount.wrapping_mul(8)))?;
+                    write!(f, "* {}", note.text)?;
+                }
+            }
+            if let Some(sub_tasks) = &self.sub_tasks
+                && !sub_tasks.iter().count().eq(&0)
+            {
+                write!(f, "\n")?;
+                for sub_task in sub_tasks.iter() {
+                    write!(f, "{:#}", sub_task)?;
+                }
+            }
+        } else {
+            match self.status {
+                TaskStatus::Open => write!(f, "- [ ] ")?,
+                TaskStatus::InProgress => write!(f, "- [/] ")?,
+                TaskStatus::Done => write!(f, "- [x] ")?,
+                TaskStatus::Blocked => write!(f, "- [B] ")?,
+                TaskStatus::Deferred => write!(f, "- [D] ")?,
+                TaskStatus::Cut => write!(f, "- [C] ")?,
+            };
+            if let Some(char) = self.priority {
+                write!(f, "({char}) ")?;
+            };
+            write!(f, "{}", self.title)?;
+            write!(f, " :: ")?;
+            if let Some(inception_date) = self.inception_date {
+                write!(f, "{} ", inception_date.to_string())?;
+            }
+            if let Some(completion_date) = self.completion_date
+                && self.status == TaskStatus::Done
+            {
+                write!(f, "{} ", completion_date.to_string())?;
+            }
+            if let Some(description) = &self.description {
+                write!(f, "{}", description)?;
+            }
+            if let Some(notes) = &self.notes
+                && !notes.iter().count().eq(&0)
+            {
+                write!(f, "\n")?;
+                for note in notes.iter() {
+                    write!(f, "{}", padding(self.parents_amount.wrapping_mul(8)))?;
+                    write!(f, "* {}", note.text)?;
+                }
+            }
+            if let Some(sub_tasks) = &self.sub_tasks
+                && !sub_tasks.iter().count().eq(&0)
+            {
+                write!(f, "\n")?;
+                for sub_task in sub_tasks.iter() {
+                    write!(f, "{}", sub_task)?;
+                }
+            }
         }
         Ok(())
     }
 }
 
 impl Task {
+    /// Returns a pretty string.
+    ///
+    /// # Notes
+    /// Uses the Display implementation.
+    /// To constuct a valid `nomos` task use the implementation of `Display` for `Task` via `println!("{task}");`
+    ///
+    /// # Usage
+    /// `println!("{}", task.pretty_string());`
+    pub fn pretty_string(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", padding(self.parents_amount.wrapping_mul(4)))?;
+
+        Ok(())
+    }
     /// Creates a task from a line
     ///
     /// # Notes

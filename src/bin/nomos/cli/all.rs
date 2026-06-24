@@ -177,7 +177,7 @@ impl<'c> CliCommand<'c> for All {
         }
         for (i, task) in out.iter().enumerate() {
             println!("#{}", i + 1);
-            println!("{}", task);
+            println!("{:#}", task);
             println!("");
         }
         println!("Found {} tasks matching your query", out.len());

@@ -28,6 +28,10 @@ impl Notes {
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Note> {
         self.notes.iter_mut()
     }
+    /// Returns an iterator over the notes
+    pub fn iter(&self) -> impl Iterator<Item = &Note> {
+        self.notes.iter()
+    }
 }
 
 impl From<Vec<Note>> for Notes {
