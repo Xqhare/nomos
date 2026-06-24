@@ -100,7 +100,17 @@ pub fn make_paths_to_crawl(config: &XffValue) -> NomosResult<Vec<(String, Vec<Pa
             )
             .add_ctx(format!("Got global config: {config}")));
         }
-        make_project_paths(&base_path, &mut out)?;
+        for dir in base_path
+            .read_dir()
+            .map_err(|e| NemesisError::new("nomos::make_paths_to_crawl", e))?
+        {
+            let dir: PathBuf = dir
+                .map_err(|e| NemesisError::new("nomos::make_paths_to_crawl", e))?
+                .path();
+            if dir.is_dir() {
+                make_project_paths(&dir, &mut out)?;
+            }
+        }
     }
     make_file_paths(config, &mut out)?;
     out.shrink_to_fit();
@@ -226,7 +236,7 @@ fn make_project_paths(
                                             .path()
                                             .to_string_lossy()
                                             .to_lowercase()
-                                            .eq(&path)
+                                            .eq(&path.to_string_lossy().to_lowercase())
                                         {
                                             tmp.push(inner_file.path());
                                         }
@@ -237,15 +247,7 @@ fn make_project_paths(
                     }
                 }
             }
-            if tmp.is_empty() {
-                return Err(NemesisError::new(
-                    "nomos::make_paths_to_crawl::make_project_paths",
-                    NomosError::Config(format!(
-                        "Invalid global config: Search base {:?} does not contain a nomos.json file",
-                        base_path
-                    )),
-                ));
-            }
+            // Dont do shit if tmp is empty; it's not a project using nomos
         }
     }
     out.push((project_name, tmp));

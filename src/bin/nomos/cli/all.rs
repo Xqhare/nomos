@@ -176,7 +176,7 @@ impl<'c> CliCommand<'c> for All {
             return;
         }
         for (i, task) in out.iter().enumerate() {
-            println!("#{}", i + 1);
+            println!("#{} - {}", i + 1, task.project);
             println!("{:#}", task);
             println!("");
         }

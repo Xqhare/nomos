@@ -122,7 +122,12 @@ impl Display for Task {
             write!(f, "{}", self.title)?;
             if let Some(description) = &self.description {
                 write!(f, "\n")?;
-                write!(f, "{}", padding(self.parents_amount.wrapping_mul(6)))?;
+                let pad = if self.parents_amount == 0 {
+                    2
+                } else {
+                    self.parents_amount.wrapping_mul(6)
+                };
+                write!(f, "{}", padding(pad))?;
                 write!(f, "{}", description)?;
             }
             if let Some(notes) = &self.notes
@@ -132,6 +137,7 @@ impl Display for Task {
                 for note in notes.iter() {
                     write!(f, "{}", padding(self.parents_amount.wrapping_mul(8)))?;
                     write!(f, "* {}", note.text)?;
+                    write!(f, "\n")?;
                 }
             }
             if let Some(sub_tasks) = &self.sub_tasks
@@ -140,6 +146,7 @@ impl Display for Task {
                 write!(f, "\n")?;
                 for sub_task in sub_tasks.iter() {
                     write!(f, "{:#}", sub_task)?;
+                    write!(f, "\n")?;
                 }
             }
         } else {
