@@ -1,6 +1,9 @@
 - [ ] Doc updates :: 
     - [ ] standard markers :: Only dirs with standard project markers are considered as projects @nomos/utils.rs
     - [ ] -h flag :: rework / expand help output
+- [ ] (A) Write doc ::
+    - [ ] (A) Especially Readme ::
+- [ ] Write tests ::
 - [ ] Subcommands :: 
     - [ ] Add TUI subcommand :: @bin/nomos/cli dep=talos:"State rework"
         * At a later stage, a lot of work -> Looking at ananke, a large part could be reused, or at least copied and modified
