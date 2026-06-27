@@ -12,3 +12,5 @@
 - [ ] (A) Update priority sorting :: Tasks with no priority should be in the middle (not at the end)
     * `M` or `N` could be used
     * This way its easier to sort my tasks
+- [ ] (X) Nvim integration :: Create a LSP server for nomos
+    * Needs its own parser, that allows invalid nomos files
