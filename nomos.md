@@ -22,3 +22,5 @@
     - [ ] Add examples :: @nomos/help.rs
         * Simple usage / task definition examples like: `- [ ] Task Name :: Task Description` `- [ ] Task tite ::` `- [X] Task title ::`
         * Maybe even the dependency syntax
+- [ ] (A) Dependencies dont seem to work ::
+    * Mawu has a task dependent on thoth (add emoji support) but mawus task is sorted way infront of thoths
