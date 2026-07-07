@@ -33,6 +33,8 @@ mod parser;
 mod tags;
 mod task;
 mod utils;
+/// LSP integration
+pub mod lsp;
 
 pub use error::{NomosError, NomosResult};
 pub use nomos::Nomos;
