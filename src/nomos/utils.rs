@@ -45,7 +45,8 @@ pub fn sort_tasks(all_project_tasks: BTreeMap<String, Tasks>) -> NomosResult<Tas
                 let dep_iter = task.dependencies.iter();
                 let mut dependencies: Vec<String> = Vec::with_capacity(dep_iter.size_hint().0);
                 for dependency in dep_iter {
-                    let complete_name = format!("{project_name}:{}", dependency.title);
+                    let dep_project = dependency.project.as_ref().unwrap_or(project_name);
+                    let complete_name = format!("{dep_project}:{}", dependency.title);
                     dependencies.push(complete_name);
                 }
                 let task_name = format!("{project_name}:{}", task.title);
@@ -290,5 +291,71 @@ fn make_search_base(config: &XffValue) -> NomosResult<Array> {
                 .to_string(),
         ))
         .add_ctx(format!("Global config: {config}"));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::task::{Task, Tasks};
+    use crate::utils::{Dependency, Dependencies, TaskStatus, FileData};
+    use std::collections::BTreeMap;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_cross_project_dependency_sorting() {
+        let mut tasks_mawu = Tasks::new();
+        let mut dep_mawu = Dependencies::new();
+        dep_mawu.add(Dependency {
+            title: "Add emoji support".to_string(),
+            project: Some("thoth".to_string()),
+        });
+
+        tasks_mawu.push(Task {
+            parents_amount: 0,
+            status: TaskStatus::Open,
+            priority: None,
+            title: "Toml Emoji support".to_string(),
+            inception_date: None,
+            completion_date: None,
+            tags: crate::tags::Tags::new(),
+            dependencies: dep_mawu,
+            description: None,
+            notes: None,
+            sub_tasks: None,
+            file_data: FileData { line: 1, path: PathBuf::from("mawu.md") },
+            project: "mawu".to_string(),
+        });
+
+        let mut tasks_thoth = Tasks::new();
+        tasks_thoth.push(Task {
+            parents_amount: 0,
+            status: TaskStatus::Open,
+            priority: None,
+            title: "Add emoji support".to_string(),
+            inception_date: None,
+            completion_date: None,
+            tags: crate::tags::Tags::new(),
+            dependencies: Dependencies::new(),
+            description: None,
+            notes: None,
+            sub_tasks: None,
+            file_data: FileData { line: 1, path: PathBuf::from("thoth.md") },
+            project: "thoth".to_string(),
+        });
+
+        let mut all_project_tasks = BTreeMap::new();
+        all_project_tasks.insert("mawu".to_string(), tasks_mawu);
+        all_project_tasks.insert("thoth".to_string(), tasks_thoth);
+
+        let sorted = sort_tasks(all_project_tasks).unwrap();
+        let sorted_list: Vec<&Task> = sorted.iter().collect();
+
+        assert_eq!(sorted_list.len(), 2);
+        // thoth task must be scheduled before mawu task
+        assert_eq!(sorted_list[0].project, "thoth");
+        assert_eq!(sorted_list[0].title, "Add emoji support");
+        assert_eq!(sorted_list[1].project, "mawu");
+        assert_eq!(sorted_list[1].title, "Toml Emoji support");
     }
 }
