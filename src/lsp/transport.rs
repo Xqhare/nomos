@@ -1,14 +1,14 @@
 //! Transport layer for LSP frames.
 
+use std::env;
+use std::fs;
 use std::io::{BufRead, Write};
 use std::path::PathBuf;
 use std::process;
-use std::env;
-use std::fs;
 
+use crate::error::NomosResult;
 use mawu::XffValue;
 use nemesis::NemesisError;
-use crate::error::NomosResult;
 
 /// LSP reader for reading frames from a `BufRead` source.
 pub struct LspReader<R: BufRead> {
@@ -33,9 +33,10 @@ impl<R: BufRead> LspReader<R> {
         // Parse headers
         loop {
             let mut line = String::new();
-            let num_bytes = self.reader.read_line(&mut line).map_err(|e| {
-                NemesisError::new("LspReader::read_frame", e)
-            })?;
+            let num_bytes = self
+                .reader
+                .read_line(&mut line)
+                .map_err(|e| NemesisError::new("LspReader::read_frame", e))?;
             if num_bytes == 0 {
                 return Ok(None); // EOF
             }
@@ -49,7 +50,10 @@ impl<R: BufRead> LspReader<R> {
                 let parts: Vec<&str> = trimmed.split(':').collect();
                 if parts.len() == 2 {
                     let len = parts[1].trim().parse::<usize>().map_err(|e| {
-                        NemesisError::new("LspReader::read_frame", std::io::Error::new(std::io::ErrorKind::InvalidData, e))
+                        NemesisError::new(
+                            "LspReader::read_frame",
+                            std::io::Error::new(std::io::ErrorKind::InvalidData, e),
+                        )
                     })?;
                     content_length = Some(len);
                 }
@@ -61,21 +65,23 @@ impl<R: BufRead> LspReader<R> {
             None => {
                 return Err(NemesisError::new(
                     "LspReader::read_frame",
-                    std::io::Error::new(std::io::ErrorKind::InvalidData, "Missing Content-Length header"),
+                    std::io::Error::new(
+                        std::io::ErrorKind::InvalidData,
+                        "Missing Content-Length header",
+                    ),
                 ));
             }
         };
 
         // Read exact payload bytes
         let mut buf = vec![0u8; len];
-        self.reader.read_exact(&mut buf).map_err(|e| {
-            NemesisError::new("LspReader::read_frame", e)
-        })?;
+        self.reader
+            .read_exact(&mut buf)
+            .map_err(|e| NemesisError::new("LspReader::read_frame", e))?;
 
         // Write payload to temp file to parse it using mawu
-        fs::write(&self.temp_file_path, &buf).map_err(|e| {
-            NemesisError::new("LspReader::read_frame", e)
-        })?;
+        fs::write(&self.temp_file_path, &buf)
+            .map_err(|e| NemesisError::new("LspReader::read_frame", e))?;
 
         let val = mawu::read::json(&self.temp_file_path)?;
 
@@ -105,11 +111,11 @@ impl<W: Write> LspWriter<W> {
 
     /// Writes a single LSP frame containing the serialized `XffValue`.
     pub fn write_frame(&mut self, val: &XffValue) -> NomosResult<()> {
-        let temp_file_path = env::temp_dir().join(format!("nomos_lsp_write_{}.json", process::id()));
+        let temp_file_path =
+            env::temp_dir().join(format!("nomos_lsp_write_{}.json", process::id()));
         mawu::write(&temp_file_path, val.clone())?;
-        let payload = fs::read_to_string(&temp_file_path).map_err(|e| {
-            NemesisError::new("LspWriter::write_frame", e)
-        })?;
+        let payload = fs::read_to_string(&temp_file_path)
+            .map_err(|e| NemesisError::new("LspWriter::write_frame", e))?;
         let _ = fs::remove_file(&temp_file_path);
 
         write!(
@@ -119,7 +125,9 @@ impl<W: Write> LspWriter<W> {
             payload
         )
         .map_err(|e| NemesisError::new("LspWriter::write_frame", e))?;
-        self.writer.flush().map_err(|e| NemesisError::new("LspWriter::write_frame", e))?;
+        self.writer
+            .flush()
+            .map_err(|e| NemesisError::new("LspWriter::write_frame", e))?;
         Ok(())
     }
 }
@@ -127,8 +135,8 @@ impl<W: Write> LspWriter<W> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::Cursor;
     use athena::Object;
+    use std::io::Cursor;
 
     #[test]
     fn test_reader_writer_framing() {

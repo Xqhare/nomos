@@ -298,7 +298,7 @@ fn make_search_base(config: &XffValue) -> NomosResult<Array> {
 mod tests {
     use super::*;
     use crate::task::{Task, Tasks};
-    use crate::utils::{Dependency, Dependencies, TaskStatus, FileData};
+    use crate::utils::{Dependencies, Dependency, FileData, TaskStatus};
     use std::collections::BTreeMap;
     use std::path::PathBuf;
 
@@ -323,7 +323,10 @@ mod tests {
             description: None,
             notes: None,
             sub_tasks: None,
-            file_data: FileData { line: 1, path: PathBuf::from("mawu.md") },
+            file_data: FileData {
+                line: 1,
+                path: PathBuf::from("mawu.md"),
+            },
             project: "mawu".to_string(),
         });
 
@@ -340,7 +343,10 @@ mod tests {
             description: None,
             notes: None,
             sub_tasks: None,
-            file_data: FileData { line: 1, path: PathBuf::from("thoth.md") },
+            file_data: FileData {
+                line: 1,
+                path: PathBuf::from("thoth.md"),
+            },
             project: "thoth".to_string(),
         });
 

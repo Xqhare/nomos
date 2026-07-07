@@ -1,4 +1,4 @@
-use std::io::{stdin, stdout, BufReader};
+use std::io::{BufReader, stdin, stdout};
 
 use nomos::lsp::LspServer;
 use nomos::lsp::transport::{LspReader, LspWriter};

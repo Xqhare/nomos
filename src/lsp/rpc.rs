@@ -71,7 +71,11 @@ impl Response {
         Self {
             id,
             result: None,
-            error: Some(ResponseError { code, message, data }),
+            error: Some(ResponseError {
+                code,
+                message,
+                data,
+            }),
         }
     }
 

@@ -18,7 +18,7 @@ strip = "symbols"
 # Error handling
 nemesis = { git = "https://github.com/xqhare/nemesis.git" }
 
-# Working with `.json` or `.csv` files
+# Working with `.json`, `.toml` or `.csv` files
 mawu = { git = "https://github.com/xqhare/mawu.git" }
 
 # Time and date library (easily integrates with `XffValue`)

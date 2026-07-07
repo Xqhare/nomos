@@ -164,4 +164,3 @@ mod tests {
         assert_eq!(dep.project, Some("thoth".to_string()));
     }
 }
-
