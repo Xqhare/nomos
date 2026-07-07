@@ -153,4 +153,15 @@ mod tests {
         assert_eq!(t2.status, TaskStatus::Done);
         assert_eq!(t2.file_data.line, 4);
     }
+
+    #[test]
+    fn test_quote_stripping_in_dependencies() {
+        use crate::utils::make_tags_and_dependencies_from_line;
+        let line = "- [ ] Task :: dep=thoth:\"Add emoji support\"";
+        let (_tags, deps) = make_tags_and_dependencies_from_line(line);
+        let dep = deps.iter().next().unwrap();
+        assert_eq!(dep.title, "Add emoji support");
+        assert_eq!(dep.project, Some("thoth".to_string()));
+    }
 }
+

@@ -138,12 +138,12 @@ pub fn make_tags_and_dependencies_from_line(line: &str) -> (Tags, Dependencies) 
                 if value.contains(':') {
                     let (project_name, dep_task_title) = value.split_once(':').unwrap();
                     dependencies.add(Dependency {
-                        title: dep_task_title.to_string(),
-                        project: Some(project_name.to_string()),
+                        title: dep_task_title.replace('"', ""),
+                        project: Some(project_name.replace('"', "")),
                     });
                 } else {
                     dependencies.add(Dependency {
-                        title: value.to_string(),
+                        title: value.replace('"', ""),
                         project: None,
                     });
                 }
