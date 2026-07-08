@@ -15,7 +15,7 @@
 - [x] (X) Nvim integration :: Create a LSP server for nomos
 - [x] Improve LSP server ::
     - [x] kind tags :: `+tag` behaves weird. typing in `+` only shows one tag, `Game` (wherever that one comes from) and nothing else.
-    - [x] location tags :: `@tag` behaves weird. typing in `@` only shows: `@README.md`, `@xqhare.net` and `@randomiserProject`. Why?
+    - [x] location tags :: `@tag` behaves weird. typing in `@` only shows: `@README.md`, `@xqhare.net` and `@randomiserProject`.
     * Dependencies work as intended
     - [x] KV tags :: key=value tags also dont work; entering `key=` doesnt even open the popup
 - [ ] Help page :: 

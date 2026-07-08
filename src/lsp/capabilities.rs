@@ -1,5 +1,5 @@
 //! When extracting this code from nomos, implement this as a Trait and update.
-//! Should be easiest and quickest way to reuse code (like `uri_to_path`) and maintain the custom logic (like `get_diagnostics`).
+//! Should be easiest and quickest way to reuse code (`uri_to_path`) and maintain the custom logic (like `get_diagnostics`).
 use std::collections::HashSet;
 use std::path::Path;
 
@@ -38,11 +38,8 @@ pub fn get_diagnostics(uri: &str, content: &str) -> XffValue {
     // To be fast and accurate to the unsaved buffer, we can write the content to a temp file first.
     static DIAG_COUNTER: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
     let counter = DIAG_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    let temp_path = std::env::temp_dir().join(format!(
-        "nomos_diag_{}_{}.md",
-        std::process::id(),
-        counter
-    ));
+    let temp_path =
+        std::env::temp_dir().join(format!("nomos_diag_{}_{}.md", std::process::id(), counter));
     if std::fs::write(&temp_path, content).is_ok() {
         if let Err(err) = parse_file(&temp_path, project) {
             // Extract line number
@@ -493,7 +490,18 @@ mod tests {
         // Test recursive kind tags (including subtask kind tag)
         let comps_kind = get_completions(&nomos, "+", 1, "my_proj");
         let items_kind = comps_kind.as_array().unwrap();
-        let kind_labels: Vec<&str> = items_kind.iter().map(|item| item.as_object().unwrap().get("label").unwrap().as_string().unwrap().as_str()).collect();
+        let kind_labels: Vec<&str> = items_kind
+            .iter()
+            .map(|item| {
+                item.as_object()
+                    .unwrap()
+                    .get("label")
+                    .unwrap()
+                    .as_string()
+                    .unwrap()
+                    .as_str()
+            })
+            .collect();
         assert!(kind_labels.contains(&"parent_kind"));
         assert!(kind_labels.contains(&"sub_kind"));
         assert!(kind_labels.contains(&"bug"));

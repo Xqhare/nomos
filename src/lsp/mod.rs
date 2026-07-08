@@ -13,6 +13,7 @@
 //!
 //! For further information, see the [LSP specification](https://microsoft.github.io/language-server-protocol/specification)
 //! and the documentation of the LSP client you are using.
+//! You can find an example nvim configuration here: https://github.com/Xqhare/nomos/blob/master/examples/nvim_lsp.lua
 
 /// LSP features (completion, diagnostics, hover)
 pub mod capabilities;
