@@ -65,6 +65,7 @@ pub fn get_diagnostics(uri: &str, content: &str) -> XffValue {
             diag.insert("range", XffValue::from(range));
             diag.insert("severity", XffValue::from(1)); // Error
             diag.insert("message", XffValue::from(format!("{}", err.leaf_error())));
+            diag.insert("source", XffValue::from("nomos-lsp".to_string()));
             diagnostics.push(XffValue::from(diag));
         }
         let _ = std::fs::remove_file(&temp_path);
