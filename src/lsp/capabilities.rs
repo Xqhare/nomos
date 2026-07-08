@@ -371,4 +371,56 @@ mod tests {
         // Clean up
         let _ = fs::remove_dir_all(&temp_dir);
     }
+
+    #[test]
+    fn test_recursive_completions() {
+        let temp_dir = env::temp_dir().join(format!("nomos_test_recursive_{}", std::process::id()));
+        fs::create_dir_all(&temp_dir).unwrap();
+
+        let task_file = temp_dir.join("tasks.md");
+        fs::write(
+            &task_file,
+            "- [ ] Parent Task :: +parent_kind @parent_loc\n    - [ ] Subtask :: +sub_kind @sub_loc est=3d owner=xqhare\n"
+        ).unwrap();
+
+        let config_file = temp_dir.join("config.json");
+        let config_content = format!(
+            r#"{{"search_bases":[], "files":{{"my_proj":"{}"}}}}"#,
+            task_file.to_str().unwrap().replace('\\', "/")
+        );
+        fs::write(&config_file, config_content).unwrap();
+
+        let nomos = Nomos::new(&config_file).ok();
+        assert!(nomos.is_some());
+
+        // Test recursive kind tags (including subtask kind tag)
+        let comps_kind = get_completions(&nomos, "+", 1, "my_proj");
+        let items_kind = comps_kind.as_array().unwrap();
+        let kind_labels: Vec<&str> = items_kind.iter().map(|item| item.as_object().unwrap().get("label").unwrap().as_string().unwrap().as_str()).collect();
+        assert!(kind_labels.contains(&"parent_kind"));
+        assert!(kind_labels.contains(&"sub_kind"));
+
+        // Test recursive location tags (including subtask location tag)
+        let comps_loc = get_completions(&nomos, "Buy @", 5, "my_proj");
+        let items_loc = comps_loc.as_array().unwrap();
+        let loc_labels: Vec<&str> = items_loc.iter().map(|item| item.as_object().unwrap().get("label").unwrap().as_string().unwrap().as_str()).collect();
+        assert!(loc_labels.contains(&"parent_loc"));
+        assert!(loc_labels.contains(&"sub_loc"));
+
+        // Test metadata key suggestions
+        let comps_keys = get_completions(&nomos, "es", 2, "my_proj");
+        let items_keys = comps_keys.as_array().unwrap();
+        let key_labels: Vec<&str> = items_keys.iter().map(|item| item.as_object().unwrap().get("label").unwrap().as_string().unwrap().as_str()).collect();
+        assert!(key_labels.contains(&"est="));
+        assert!(key_labels.contains(&"owner="));
+
+        // Test metadata value suggestion when '=' is typed
+        let comps_vals = get_completions(&nomos, "est=", 4, "my_proj");
+        let items_vals = comps_vals.as_array().unwrap();
+        let val_labels: Vec<&str> = items_vals.iter().map(|item| item.as_object().unwrap().get("label").unwrap().as_string().unwrap().as_str()).collect();
+        assert!(val_labels.contains(&"3d"));
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
 }
+
