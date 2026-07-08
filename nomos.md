@@ -11,9 +11,13 @@
 - [ ] Sort done last :: Done tasks should always be at the end
 - [ ] (A) Update priority sorting :: Tasks with no priority should be in the middle (not at the end)
     * `M` or `N` could be used
-    * This way its easier to sort my tasks
-- [ ] (X) Nvim integration :: Create a LSP server for nomos
-    * Needs its own parser, that allows invalid nomos files
+    * This way its easier to sort my tasks +Task
+- [x] (X) Nvim integration :: Create a LSP server for nomos
+- [x] Improve LSP server ::
+    - [x] kind tags :: `+tag` behaves weird. typing in `+` only shows one tag, `Game` (wherever that one comes from) and nothing else.
+    - [x] location tags :: `@tag` behaves weird. typing in `@` only shows: `@README.md`, `@xqhare.net` and `@randomiserProject`. Why?
+    * Dependencies work as intended
+    - [x] KV tags :: key=value tags also dont work; entering `key=` doesnt even open the popup
 - [ ] Help page :: 
     - [ ] Update help page :: @nomos/help.rs with better about section. Usage is only partialy right and needs more formatting work in general.
         * Global Config and its fields
@@ -22,5 +26,5 @@
     - [ ] Add examples :: @nomos/help.rs
         * Simple usage / task definition examples like: `- [ ] Task Name :: Task Description` `- [ ] Task tite ::` `- [X] Task title ::`
         * Maybe even the dependency syntax
-- [x] (A) Dependencies dont seem to work ::
+- [x] (A) Dependencies dont seem to work :: 
     * Mawu has a task dependent on thoth (add emoji support) but mawus task is sorted way infront of thoths
