@@ -1,3 +1,5 @@
+//! When extracting this code from nomos, implement this as a Trait and update.
+//! Should be easiest and quickest way to reuse code (like `uri_to_path`) and maintain the custom logic (like `get_diagnostics`).
 use std::collections::HashSet;
 use std::path::Path;
 
@@ -476,28 +478,62 @@ mod tests {
         let kind_labels: Vec<&str> = items_kind.iter().map(|item| item.as_object().unwrap().get("label").unwrap().as_string().unwrap().as_str()).collect();
         assert!(kind_labels.contains(&"parent_kind"));
         assert!(kind_labels.contains(&"sub_kind"));
+        assert!(kind_labels.contains(&"bug"));
+        assert!(kind_labels.contains(&"refactor"));
 
         // Test recursive location tags (including subtask location tag)
         let comps_loc = get_completions(&nomos, "Buy @", 5, "my_proj");
         let items_loc = comps_loc.as_array().unwrap();
-        let loc_labels: Vec<&str> = items_loc.iter().map(|item| item.as_object().unwrap().get("label").unwrap().as_string().unwrap().as_str()).collect();
+        let loc_labels: Vec<&str> = items_loc
+            .iter()
+            .map(|item| {
+                item.as_object()
+                    .unwrap()
+                    .get("label")
+                    .unwrap()
+                    .as_string()
+                    .unwrap()
+                    .as_str()
+            })
+            .collect();
         assert!(loc_labels.contains(&"parent_loc"));
         assert!(loc_labels.contains(&"sub_loc"));
 
         // Test metadata key suggestions
         let comps_keys = get_completions(&nomos, "es", 2, "my_proj");
         let items_keys = comps_keys.as_array().unwrap();
-        let key_labels: Vec<&str> = items_keys.iter().map(|item| item.as_object().unwrap().get("label").unwrap().as_string().unwrap().as_str()).collect();
+        let key_labels: Vec<&str> = items_keys
+            .iter()
+            .map(|item| {
+                item.as_object()
+                    .unwrap()
+                    .get("label")
+                    .unwrap()
+                    .as_string()
+                    .unwrap()
+                    .as_str()
+            })
+            .collect();
         assert!(key_labels.contains(&"est="));
         assert!(key_labels.contains(&"owner="));
 
         // Test metadata value suggestion when '=' is typed
         let comps_vals = get_completions(&nomos, "est=", 4, "my_proj");
         let items_vals = comps_vals.as_array().unwrap();
-        let val_labels: Vec<&str> = items_vals.iter().map(|item| item.as_object().unwrap().get("label").unwrap().as_string().unwrap().as_str()).collect();
+        let val_labels: Vec<&str> = items_vals
+            .iter()
+            .map(|item| {
+                item.as_object()
+                    .unwrap()
+                    .get("label")
+                    .unwrap()
+                    .as_string()
+                    .unwrap()
+                    .as_str()
+            })
+            .collect();
         assert!(val_labels.contains(&"3d"));
 
         let _ = fs::remove_dir_all(&temp_dir);
     }
 }
-
