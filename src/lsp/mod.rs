@@ -1,3 +1,19 @@
+//! # Nomos LSP Server
+//!
+//! This module contains the main LSP server implementation
+//! and related helpers.
+//!
+//! To use this server, you can run it from the command line:
+//!
+//! ```bash
+//! cargo run --release --bin nomos-lsp
+//! ```
+//!
+//! And then connect to it with your favorite LSP client.
+//!
+//! For further information, see the [LSP specification](https://microsoft.github.io/language-server-protocol/specification)
+//! and the documentation of the LSP client you are using.
+
 /// LSP features (completion, diagnostics, hover)
 pub mod capabilities;
 /// LSP JSON-RPC models
@@ -6,10 +22,10 @@ pub mod rpc;
 pub mod transport;
 
 use std::collections::HashMap;
-use std::env;
 use std::io::{BufRead, Write};
 use std::path::PathBuf;
 
+use areia::BaseDirs;
 use athena::Object;
 use mawu::XffValue;
 
@@ -250,12 +266,12 @@ impl LspServer {
 }
 
 fn find_global_config() -> Option<PathBuf> {
-    if let Ok(home) = env::var("HOME") {
-        let path1 = PathBuf::from(&home).join(".config/nomos/config.json");
+    if let Ok(home) = BaseDirs::new() {
+        let path1 = home.home_dir().join(".config/nomos/config.json");
         if path1.exists() {
             return Some(path1);
         }
-        let path2 = PathBuf::from(&home).join(".nomos/config.json");
+        let path2 = home.home_dir().join(".nomos/config.json");
         if path2.exists() {
             return Some(path2);
         }
