@@ -102,6 +102,7 @@ impl LspServer {
                         XffValue::from("@"),
                         XffValue::from("\""),
                         XffValue::from(":"),
+                        XffValue::from("="),
                     ]),
                 );
                 capabilities.insert("completionProvider", XffValue::from(completion));
