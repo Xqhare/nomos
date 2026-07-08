@@ -92,78 +92,155 @@ pub fn get_completions(
         current_line
     };
 
-    if before_cursor.ends_with('@') {
-        // Location Tag completion
-        let mut locations = HashSet::new();
-        if let Some(n) = nomos {
-            for task in n.get_tasks().iter() {
-                for loc in task.tags.location_tags.iter() {
-                    locations.insert(loc.clone());
+    // Split the before_cursor string by whitespace to get the last word
+    let last_word = before_cursor
+        .split(|c: char| c.is_whitespace())
+        .last()
+        .unwrap_or("");
+
+    // Collect all tags recursively from the Nomos state
+    let mut kind_tags = HashSet::new();
+    let mut location_tags = HashSet::new();
+    let mut metadata_keys = HashSet::new();
+
+    if let Some(n) = nomos {
+        fn collect_tags_recursively(
+            task: &Task,
+            kind_tags: &mut HashSet<String>,
+            location_tags: &mut HashSet<String>,
+            metadata_keys: &mut HashSet<String>,
+        ) {
+            for kind in &task.tags.kind_tags {
+                kind_tags.insert(kind.clone());
+            }
+            for loc in &task.tags.location_tags {
+                location_tags.insert(loc.clone());
+            }
+            for key in task.tags.metadata_tags.keys() {
+                metadata_keys.insert(key.clone());
+            }
+
+            if let Some(notes) = &task.notes {
+                for note in notes.iter() {
+                    for kind in &note.tags.kind_tags {
+                        kind_tags.insert(kind.clone());
+                    }
+                    for loc in &note.tags.location_tags {
+                        location_tags.insert(loc.clone());
+                    }
+                    for key in note.tags.metadata_tags.keys() {
+                        metadata_keys.insert(key.clone());
+                    }
+                }
+            }
+
+            if let Some(sub_tasks) = &task.sub_tasks {
+                for sub_task in sub_tasks.iter() {
+                    collect_tags_recursively(sub_task, kind_tags, location_tags, metadata_keys);
                 }
             }
         }
-        for loc in locations {
+
+        for task in n.get_tasks().iter() {
+            collect_tags_recursively(task, &mut kind_tags, &mut location_tags, &mut metadata_keys);
+        }
+    }
+
+    if last_word.starts_with('@') {
+        // Location Tag completion
+        for loc in location_tags {
             let mut item = Object::new();
             item.insert("label", XffValue::from(loc));
             item.insert("kind", XffValue::from(14)); // Keyword/Tag
             items.push(XffValue::from(item));
         }
-    } else if before_cursor.ends_with('+') {
+    } else if last_word.starts_with('+') {
         // Kind Tag completion
-        let mut kinds = HashSet::new();
-        if let Some(n) = nomos {
-            for task in n.get_tasks().iter() {
-                for kind in task.tags.kind_tags.iter() {
-                    kinds.insert(kind.clone());
-                }
-            }
-        }
-        for kind in kinds {
+        for kind in kind_tags {
             let mut item = Object::new();
             item.insert("label", XffValue::from(kind));
             item.insert("kind", XffValue::from(14)); // Keyword/Tag
             items.push(XffValue::from(item));
         }
-    } else if before_cursor.contains("dep=") {
+    } else if last_word.starts_with("dep=") {
         // Dependency completion
         if let Some(n) = nomos {
-            // Check if completing for a specific project, e.g. dep=thoth:"
-            if let Some(pos) = before_cursor.rfind("dep=") {
-                let dep_str = &before_cursor[pos + 4..];
-                if dep_str.contains(':') {
-                    let parts: Vec<&str> = dep_str.split(':').collect();
-                    let target_project = parts[0].trim_matches('"').trim();
-                    for task in n.get_tasks().iter() {
-                        if task.project == target_project {
-                            let mut item = Object::new();
-                            item.insert("label", XffValue::from(format!("\"{}\"", task.title)));
-                            item.insert("kind", XffValue::from(18)); // Reference/Task
-                            items.push(XffValue::from(item));
-                        }
+            let dep_str = &last_word[4..];
+            if dep_str.contains(':') {
+                let parts: Vec<&str> = dep_str.split(':').collect();
+                let target_project = parts[0].trim_matches('"').trim();
+                for task in n.get_tasks().iter() {
+                    if task.project == target_project {
+                        let mut item = Object::new();
+                        item.insert("label", XffValue::from(format!("\"{}\"", task.title)));
+                        item.insert("kind", XffValue::from(18)); // Reference/Task
+                        items.push(XffValue::from(item));
                     }
-                } else {
-                    // Suggest project names or current project tasks
-                    let mut projects = HashSet::new();
-                    for task in n.get_tasks().iter() {
-                        projects.insert(task.project.clone());
-                        if task.project == current_project {
-                            let mut item = Object::new();
-                            item.insert("label", XffValue::from(format!("\"{}\"", task.title)));
-                            item.insert("kind", XffValue::from(18)); // Reference/Task
-                            items.push(XffValue::from(item));
-                        }
+                }
+            } else {
+                let mut projects = HashSet::new();
+                for task in n.get_tasks().iter() {
+                    projects.insert(task.project.clone());
+                    if task.project == current_project {
+                        let mut item = Object::new();
+                        item.insert("label", XffValue::from(format!("\"{}\"", task.title)));
+                        item.insert("kind", XffValue::from(18)); // Reference/Task
+                        items.push(XffValue::from(item));
                     }
-                    // Suggest other projects
-                    for proj in projects {
-                        if proj != current_project {
-                            let mut item = Object::new();
-                            item.insert("label", XffValue::from(format!("{}:", proj)));
-                            item.insert("kind", XffValue::from(9)); // Module/Project
-                            items.push(XffValue::from(item));
-                        }
+                }
+                for proj in projects {
+                    if proj != current_project {
+                        let mut item = Object::new();
+                        item.insert("label", XffValue::from(format!("{}:", proj)));
+                        item.insert("kind", XffValue::from(9)); // Module/Project
+                        items.push(XffValue::from(item));
                     }
                 }
             }
+        }
+    } else if last_word.contains('=') {
+        // Metadata Value completion (e.g. key=value)
+        let (key, _val) = last_word.split_once('=').unwrap();
+        let mut values = HashSet::new();
+        if let Some(n) = nomos {
+            fn collect_metadata_values_recursively(
+                task: &Task,
+                target_key: &str,
+                values: &mut HashSet<String>,
+            ) {
+                if let Some(v) = task.tags.metadata_tags.get(target_key) {
+                    values.insert(v.clone());
+                }
+                if let Some(notes) = &task.notes {
+                    for note in notes.iter() {
+                        if let Some(v) = note.tags.metadata_tags.get(target_key) {
+                            values.insert(v.clone());
+                        }
+                    }
+                }
+                if let Some(sub_tasks) = &task.sub_tasks {
+                    for sub_task in sub_tasks.iter() {
+                        collect_metadata_values_recursively(sub_task, target_key, values);
+                    }
+                }
+            }
+            for task in n.get_tasks().iter() {
+                collect_metadata_values_recursively(task, key, &mut values);
+            }
+        }
+        for v in values {
+            let mut item = Object::new();
+            item.insert("label", XffValue::from(v));
+            item.insert("kind", XffValue::from(12)); // Value completion
+            items.push(XffValue::from(item));
+        }
+    } else {
+        // Metadata Key completion (suggesting key=)
+        for key in metadata_keys {
+            let mut item = Object::new();
+            item.insert("label", XffValue::from(format!("{}=", key)));
+            item.insert("kind", XffValue::from(14)); // Keyword/Tag
+            items.push(XffValue::from(item));
         }
     }
 
