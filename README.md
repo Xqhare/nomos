@@ -30,19 +30,118 @@ Nomos was a lesser Greek deity of laws, statutes, and ordinances.
 
 ## Usage
 
-Nomos is both available to be used as a library and as a command line tool.
+Nomos is available to be used both as a command line tool and as a Rust library.
 
 ### Command line tool
 
 Clone the repository and run `cargo install --path .`
 
-First, run `nomos` by itself to create the config file.
-Then, confirm the setup with `nomos validate`.
-If successful, run `nomos all` or `nomos next` to get started.
+On first execution, Nomos creates a `config.json` file inside `~/.config/nomos` (or `~/.nomos` as a fallback).
+To get started:
+1. Run `nomos` by itself to initialize the config file.
+2. Update the `search_bases` key in `config.json` with the paths pointing to root directories containing the projects you want to track.
+3. You can also optionally update the `files` key with `"project_name": "path/to/specific/file.md"` if you want to track individual files directly.
 
-Run `nomos --help` for more information.
+For example, if the path `~/projects/rust` is present in `search_bases`, Nomos crawls each of its subdirectories:
+- It looks for a `nomos.json` file. If found, it reads each file specified by the key `task_files`.
+- If no `nomos.json` is found, it falls back to looking for files named `nomos`, `todo`, `tasks`, or `roadmap` with a `.txt` or `.md` extension in the project directory.
+- It parses all discovered files and creates a task for each one.
 
-### Importing
+An example `nomos.json` file:
+```json
+{
+  "task_files": [
+    "TODO.md",
+    "docs/roadmap.md"
+  ]
+}
+```
+
+#### Running CLI Commands
+
+1. Confirm your configuration setup with:
+   ```bash
+   nomos validate
+   ```
+2. Once validated, retrieve all tasks sorted by priority and dependencies:
+   ```bash
+   nomos all
+   ```
+3. Or see the next tasks to work on:
+   ```bash
+   nomos next
+   ```
+
+For more CLI options, run:
+```bash
+nomos --help
+```
+
+---
+
+### Task File Syntax
+
+Nomos task files are standard Markdown lists with specific list markers:
+- Tasks start with a hyphen (`-`) and must be followed by a status bracket (e.g., `- [ ]`).
+- Notes start with an asterisk (`*`) and provide details for the preceding task.
+
+#### Tasks
+The syntax of a task is:
+```text
+- [Status] (Priority) Title :: [InceptionDate] [CompletionDate] Description +kindTag @locationTag keyTag=valueTag dep="Dependency Title"
+```
+
+- **Status**: Can be one of:
+  - `[ ]` Open
+  - `[/]` In Progress
+  - `[x]` Completed
+  - `[B]` Blocked
+  - `[C]` Cut
+  - `[D]` Deferred
+- **Priority** (Optional): A single uppercase letter `(A)` through `(Z)` enclosed in parentheses, where `(A)` is the highest priority and `(Z)` is the lowest.
+- **Title**: The unique title of the task preceding the double colon (` :: `) delimiter. It must be unique within its project to define dependencies.
+- **Delimiter**: A double colon with leading and trailing whitespace (` :: `) is required.
+- **Dates** (Optional): Optional date fields in `YYYY-MM-DD` format.
+  - One date: `[InceptionDate]`
+  - Two dates: `[InceptionDate] [CompletionDate]`. Note: `CompletionDate` can only be set if the status is completed (`[x]`).
+- **Description**: The description follows the date fields. It can contain tags and dependencies.
+
+#### Tags
+Nomos supports three types of tags:
+- `+Kind`: Semantic categorization (e.g., `+bug`, `+feature`), defined with a leading `+` without whitespace.
+- `@Location`: Location/subsystem target (e.g., `@src/main.rs`), defined with a leading `@`.
+- `Key=Value`: Custom key-value pairs for metadata (e.g., `est=2d`, `owner=Xqhare`).
+
+#### Dependencies
+Dependencies are represented as special key-value pairs:
+- `dep="Dependency Title"` (same project)
+- `dep="project_name:Dependency Title"` (cross-project)
+
+A dependency is a task that must be completed before this task can be completed.
+
+#### Notes
+Notes start with `*`. They are associated with the task immediately above them at their respective indentation level and cannot define dependencies.
+
+#### Task Children / Hierarchy
+A parent task can have child tasks immediately following it, indented by tab characters. Indentation level is syntactically significant.
+- A parent task is implicitly dependent on all its child subtasks.
+- A parent task cannot be marked completed (`[x]`) until all its child subtasks are completed.
+
+Example of a Nomos task file:
+```markdown
+- [ ] (A) Integrate CLI toolkit :: 2026-05-22 Integrate Eshu +feature @src/main.rs
+	- [ ] Setup argument builder :: Write command definitions
+	- [x] Parse subcommands :: Test parser against standard inputs
+	* Remember to check for std::env::args_os compatibility
+	* Make sure we don't pull in any external parser dependencies
+- [B] Run Kahn Sort :: dep="Integrate CLI toolkit" +feature @src/graph.rs
+```
+
+---
+
+### Rust Library Usage
+
+#### Importing
 
 Add the following to your `Cargo.toml`:
 
@@ -51,10 +150,30 @@ Add the following to your `Cargo.toml`:
 nomos = { git = "https://github.com/xqhare/nomos" }
 ```
 
-### Example
+#### Example
 
-```rust
+```rust,no_run
+use nomos::Nomos;
+use nomos::prelude::*;
 
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize Nomos using the global config file path
+    let nomos = Nomos::new("config.json")?;
+
+    // Retrieve all tasks parsed across crawl paths, sorted topographically
+    let tasks = nomos.get_tasks();
+
+    for task in tasks.iter() {
+        println!("Task: {} [Status: {:?}]", task.title, task.status);
+        if let Some(sub_tasks) = &task.sub_tasks {
+            for sub_task in sub_tasks.iter() {
+                println!("  -> Subtask: {}", sub_task.title);
+            }
+        }
+    }
+
+    Ok(())
+}
 ```
 
 ## License
