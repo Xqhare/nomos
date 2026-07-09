@@ -1,0 +1,9 @@
+{
+  "files": {
+    "software_ideas": "/home/user_name/Programming_ideas/nomos.md"
+  },
+  "search_bases": [
+    "/home/user_name/rust/",
+    "/home/user_name/python/"
+  ]
+}

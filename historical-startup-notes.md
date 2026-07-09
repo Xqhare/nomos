@@ -29,9 +29,9 @@ Nomos files (e.g., `TODO.md`) are 100% compliant with standard Markdown list ren
   - `[ ]` = Open
   - `[/]` = In Progress
   - `[x]` = Done
+  - `[C]` = Cut / Dropped / Excluded
   - `[B]` = Blocked
   - `[D]` = Deferred
-  - `[C]` = Cut / Dropped / Excluded
 - **Priority** (Optional): A single uppercase letter, e.g., `(A)`.
 - **Title**: The string preceding the `::` delimiter (excluding the status and priority brackets). Can contain spaces.
 - **Delimiter**: `::` separates the core identity (title) from metadata and description.

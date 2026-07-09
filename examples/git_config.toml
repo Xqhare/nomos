@@ -1,0 +1,7 @@
+# This is an example git config file defining a helper command
+# to validate changes to nomos files, commit the changes and push.
+
+[alias]
+nomos = "!nomos validate && git cta \"update nomos\" && git ps"
+ps = push
+cta = commit -am
