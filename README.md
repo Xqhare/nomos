@@ -20,6 +20,10 @@ All nomos files follow the syntax defined [here](https://github.com/Xqhare/nomos
 ## Features
 
 - _**No dependencies**_: All code is written by me or part of std.
+- LSP Server
+- Command Line Tool
+- Parsing Library
+- Nomos file specification
 
 ## Naming
 
@@ -31,8 +35,23 @@ Nomos was a lesser Greek deity of laws, statutes, and ordinances.
 ## Usage
 
 Nomos is available to be used both as a command line tool and as a Rust library.
+It also provides an LSP server for Neovim.
 
-### Command line tool
+### LSP Server
+
+To use this server, you can run it from the command line:
+
+```bash
+cargo run --release --bin nomos-lsp
+```
+
+And then connect to it with your favorite LSP client.
+
+For further information, see the [LSP specification](https://microsoft.github.io/language-server-protocol/specification)
+and the documentation of the LSP client you are using.
+You can find an example nvim configuration [here](https://github.com/Xqhare/nomos/blob/master/examples/nvim_lsp.lua).
+
+### Command Line Tool
 
 Clone the repository and run `cargo install --path .`
 
