@@ -12,7 +12,10 @@
 - [ ] (A) Update priority sorting :: Tasks with no priority should be in the middle (not at the end)
     * `M` or `N` could be used
     * This way its easier to sort my tasks +Task
-- [x] (X) Nvim integration :: Create a LSP server for nomos
+    * Configurable via the global config file and overruled by the project config file
+- [ ] (G) Nvim integration :: 
+    - [x] Create a LSP server for nomos ::
+    - [ ] Code Highlighting :: A nvim plugin would be nice to make the files look nicer (and easier to read at a glance)
 - [ ] Improve LSP server ::
     - [x] kind tags :: `+tag` behaves weird. typing in `+` only shows one tag, `Game` (wherever that one comes from) and nothing else. +Bug
     - [x] location tags :: `@tag` behaves weird. typing in `@` only shows: `@README.md`, `@xqhare.net` and `@randomiserProject`.
@@ -35,3 +38,5 @@
 - [x] (A) Dependencies dont seem to work :: 
     * Mawu has a task dependent on thoth (add emoji support) but mawus task is sorted way infront of thoths
 - [ ] (A) Move code :: @nomos/utils.rs can be moved out into the std lib when dep=software_ideas:"create my own std library in rust"
+- [ ] (A) Sub task dependencies are ignored :: 
+    * Easy fix: push each sub task into the flattened kahn list depending on the parent. rest should work as is.
