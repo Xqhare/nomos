@@ -1,4 +1,5 @@
-use std::{collections::BTreeMap, path::PathBuf};
+use std::{collections::{BTreeMap, HashMap}, path::PathBuf};
+
 
 use athena::{Array, sorting::kahns_weighted};
 use mawu::{XffValue, read::json};
@@ -30,40 +31,104 @@ pub fn parse_tasks(
     Ok(all_project_tasks)
 }
 
+fn collect_recursive(
+    task: &Task,
+    project_name: &str,
+    parent_titles: &mut Vec<String>,
+    flat_tasks: &mut HashMap<String, Task>,
+    child_ids_map: &mut HashMap<String, Vec<String>>,
+) {
+    let current_id = if parent_titles.is_empty() {
+        format!("{project_name}:{}", task.title)
+    } else {
+        format!("{project_name}:{}:{}", parent_titles.join(":"), task.title)
+    };
+
+    flat_tasks.insert(current_id.clone(), task.clone());
+
+    if let Some(sub_tasks) = &task.sub_tasks {
+        let mut child_ids = Vec::new();
+        for sub_task in sub_tasks.iter() {
+            parent_titles.push(task.title.clone());
+            let sub_id = format!("{project_name}:{}:{}", parent_titles.join(":"), sub_task.title);
+            child_ids.push(sub_id);
+            collect_recursive(sub_task, project_name, parent_titles, flat_tasks, child_ids_map);
+            parent_titles.pop();
+        }
+        child_ids_map.insert(current_id, child_ids);
+    }
+}
+
 /// Expects `all_project_tasks` to be `String = project_name, Vec<Task> = tasks`
 pub fn sort_tasks(all_project_tasks: BTreeMap<String, Tasks>) -> NomosResult<Tasks> {
+    let mut flat_tasks = HashMap::new();
+    let mut child_ids_map = HashMap::new();
+
+    for (project_name, tasks) in all_project_tasks.iter() {
+        for task in tasks.iter() {
+            let mut parent_titles = Vec::new();
+            collect_recursive(
+                task,
+                project_name,
+                &mut parent_titles,
+                &mut flat_tasks,
+                &mut child_ids_map,
+            );
+        }
+    }
+
     // Kahn's algorithm, modified for weighted tasks. The lower the weight, the higher the
     // priority. 0 is the highest, 255 is the lowest
     // Why: As prio is a valid 7bit ASCII char and A (highest) - Z (lowest) ordering is desired
     let kahn_input = {
-        // Only assumes 4 tasks per project on average; should be fine but will lead
-        // to some allocations
-        let mut kahn_input: Vec<(String, u8, Vec<String>)> =
-            Vec::with_capacity(all_project_tasks.len().saturating_mul(4));
-        for (project_name, tasks) in all_project_tasks.iter() {
-            for task in tasks.iter() {
-                let dep_iter = task.dependencies.iter();
-                let mut dependencies: Vec<String> = Vec::with_capacity(dep_iter.size_hint().0);
-                for dependency in dep_iter {
-                    let dep_project = dependency.project.as_ref().unwrap_or(project_name);
-                    let complete_name = format!("{dep_project}:{}", dependency.title);
-                    dependencies.push(complete_name);
-                }
-                let task_name = format!("{project_name}:{}", task.title);
-                let prio: u8 = if let Some(prio) = task.priority {
-                    prio as u8
+        let mut kahn_input: Vec<(String, u8, Vec<String>)> = Vec::with_capacity(flat_tasks.len());
+        for (current_id, task) in flat_tasks.iter() {
+            let dep_iter = task.dependencies.iter();
+            let mut dependencies: Vec<String> = Vec::with_capacity(dep_iter.size_hint().0);
+
+            for dependency in dep_iter {
+                let dep_project = dependency.project.as_ref().unwrap_or(&task.project);
+                let matched_id = flat_tasks.keys().find(|key| {
+                    if let Some((first, _)) = key.split_once(':') {
+                        if first == dep_project {
+                            if let Some(last) = key.rsplit(':').next() {
+                                if last == dependency.title {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    false
+                });
+                let dep_id = if let Some(matched) = matched_id {
+                    matched.clone()
                 } else {
-                    255
+                    format!("{dep_project}:{}", dependency.title)
                 };
-                kahn_input.push((task_name, prio, dependencies));
+                dependencies.push(dep_id);
             }
+
+            if let Some(child_ids) = child_ids_map.get(current_id) {
+                for child_id in child_ids {
+                    dependencies.push(child_id.clone());
+                }
+            }
+
+            let prio: u8 = if let Some(prio) = task.priority {
+                prio as u8
+            } else {
+                255
+            };
+            kahn_input.push((current_id.clone(), prio, dependencies));
         }
         kahn_input
     };
+
     let kahn_in: Vec<(&str, u8, Vec<&str>)> = kahn_input
         .iter()
         .map(|(a, u, b)| (a.as_str(), *u, b.iter().map(|s| s.as_str()).collect()))
         .collect();
+
     let sorted = match kahns_weighted(&kahn_in) {
         Ok(v) => v,
         Err(e) => {
@@ -71,19 +136,16 @@ pub fn sort_tasks(all_project_tasks: BTreeMap<String, Tasks>) -> NomosResult<Tas
                 .add_ctx("Sorting using Kahn's algorythm failed"));
         }
     };
+
     let mut sorted_tasks: Vec<Task> = Vec::with_capacity(sorted.len());
     for task_name in sorted {
-        let (project_name, task_name) = task_name.split_once(':').unwrap();
-        if let Some(tasks) = all_project_tasks.get(project_name) {
-            for task in tasks.iter() {
-                if task.title == task_name {
-                    sorted_tasks.push(task.clone());
-                }
-            }
+        if let Some(task) = flat_tasks.get(task_name) {
+            sorted_tasks.push(task.clone());
         }
     }
     Ok(sorted_tasks.into())
 }
+
 
 /// Expects `config` to be `XffValue::Object`
 pub fn make_paths_to_crawl(config: &XffValue) -> NomosResult<Vec<(String, Vec<PathBuf>)>> {
@@ -363,5 +425,51 @@ mod tests {
         assert_eq!(sorted_list[0].title, "Add emoji support");
         assert_eq!(sorted_list[1].project, "mawu");
         assert_eq!(sorted_list[1].title, "Toml Emoji support");
+    }
+
+    #[test]
+    fn test_subtask_sorting_and_dependencies() {
+        let mut tasks = Tasks::new();
+        let mut subtasks = Tasks::new();
+        subtasks.push(Task {
+            parents_amount: 1,
+            status: TaskStatus::Open,
+            priority: None,
+            title: "Subtask A".to_string(),
+            inception_date: None,
+            completion_date: None,
+            tags: crate::tags::Tags::new(),
+            dependencies: Dependencies::new(),
+            description: None,
+            notes: None,
+            sub_tasks: None,
+            file_data: FileData { line: 2, path: PathBuf::from("test.nomos") },
+            project: "proj".to_string(),
+        });
+        tasks.push(Task {
+            parents_amount: 0,
+            status: TaskStatus::Open,
+            priority: None,
+            title: "Parent P".to_string(),
+            inception_date: None,
+            completion_date: None,
+            tags: crate::tags::Tags::new(),
+            dependencies: Dependencies::new(),
+            description: None,
+            notes: None,
+            sub_tasks: Some(subtasks),
+            file_data: FileData { line: 1, path: PathBuf::from("test.nomos") },
+            project: "proj".to_string(),
+        });
+
+        let mut all_project_tasks = BTreeMap::new();
+        all_project_tasks.insert("proj".to_string(), tasks);
+
+        let sorted = sort_tasks(all_project_tasks).unwrap();
+        let sorted_list: Vec<&Task> = sorted.iter().collect();
+
+        // Subtask A must sort before Parent P because the parent depends on the subtask
+        assert_eq!(sorted_list[0].title, "Subtask A");
+        assert_eq!(sorted_list[1].title, "Parent P");
     }
 }
