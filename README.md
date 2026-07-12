@@ -61,20 +61,45 @@ To get started:
 2. Update the `search_bases` key in `config.json` with the paths pointing to root directories containing the projects you want to track.
 3. You can also optionally update the `files` key with `"project_name": "path/to/specific/file.nomos"` if you want to track individual files directly.
 
+An example global `config.json` containing all valid key-value pairs:
+```json
+{
+  "search_bases": [
+    "/home/xqhare/Adytum/Programming/rust/"
+  ],
+  "files": {
+    "personal_tasks": "/home/xqhare/Adytum/personal.nomos"
+  },
+  "version": 1,
+  "default_prio_level": 5
+}
+```
+
 For example, if the path `~/projects/rust` is present in `search_bases`, Nomos crawls each of its subdirectories:
 - It looks for a `nomos.json` file. If found, it reads each file specified by the key `task_files`.
 - If no `nomos.json` is found, it falls back to looking for files named `nomos`, `todo`, `tasks`, or `roadmap` with a `.nomos` extension (or legacy `.md`/`.txt` files) in the project directory.
 - It parses all discovered files and creates a task for each one.
 
-An example `nomos.json` file:
+An example project-specific `nomos.json` file containing all valid key-value pairs:
 ```json
 {
   "task_files": [
     "TODO.nomos",
     "docs/roadmap.nomos"
-  ]
+  ],
+  "version": 1,
+  "default_prio_level": 5
 }
 ```
+
+#### Version Resolution
+
+When processing a task file, Nomos resolves the format version using the following precedence pipeline:
+
+1. **In-File Metadata Override**: If the first non-empty line of the file is an HTML comment matching `<!-- nomos: X -->` (where `X` is `0` or `1`), version `X` is used.
+2. **Project Configuration (`nomos.json`)**: If a `version` key exists in the project configuration (e.g. `"version": 1`), it applies to all task files in that project.
+3. **Global Configuration (`config.json`)**: If a `version` key exists in the global configuration, it acts as the default fallback.
+4. **Extension Inference**: If no version is explicitly configured, files with a `.md` extension are parsed using **v0** rules, and files with a `.nomos` extension are parsed using **v1** rules.
 
 #### Running CLI Commands
 

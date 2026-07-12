@@ -41,6 +41,7 @@ fn make_usage(string: &mut String) {
     string.push_str(DOUBLE_LINEBREAK);
     make_usage_file(string);
     make_usage_cli(string);
+    make_version_resolution(string);
     make_further_information(string);
 }
 
@@ -78,6 +79,10 @@ fn make_usage_cli(string: &mut String) {
     string.push_str(LINEBREAK);
     string.push_str("Inside the `config.json` file, you can also update the `files` key with (\"project_name\": \"path/to/specific/file.nomos\") if you want to track specific files.");
     string.push_str(DOUBLE_LINEBREAK);
+    string.push_str("An example global `config.json` containing all valid key-value pairs:");
+    string.push_str(LINEBREAK);
+    string.push_str("{\n\t\"search_bases\": [\n\t\t\"/path/to/projects/\"\n\t],\n\t\"files\": {\n\t\t\"personal_tasks\": \"/path/to/personal.nomos\"\n\t},\n\t\"version\": 1,\n\t\"default_prio_level\": 5\n}");
+    string.push_str(DOUBLE_LINEBREAK);
     string.push_str("Example:");
     string.push_str(LINEBREAK);
     string.push_str(
@@ -90,11 +95,27 @@ fn make_usage_cli(string: &mut String) {
     string.push_str(DOUBLE_LINEBREAK);
     string.push_str("Nomos will then parse each file and create a task for each task found.");
     string.push_str(DOUBLE_LINEBREAK);
-    string.push_str("An example `nomos.json` file:");
+    string.push_str("An example project specific `nomos.json` containing all valid key-value pairs:");
     string.push_str(LINEBREAK);
-    string.push_str("{\n\t\"task_files\": [\n\t\t\"TODO.nomos\",\n\t\t\"docs/roadmap.nomos\"\n  ]\n}");
+    string.push_str("{\n\t\"task_files\": [\n\t\t\"TODO.nomos\",\n\t\t\"docs/roadmap.nomos\"\n\t],\n\t\"version\": 1,\n\t\"default_prio_level\": 5\n}");
     string.push_str(PARAGRAPH);
 }
+
+fn make_version_resolution(string: &mut String) {
+    string.push_str("Version Resolution:");
+    string.push_str(DOUBLE_LINEBREAK);
+    string.push_str("Nomos supports both v0 (legacy) and v1 format rules. When processing a task file, Nomos determines its format version using the following precedence resolution pipeline:");
+    string.push_str(BREAK_DOUBLE_INDENT);
+    string.push_str("1. In-File Metadata Override: If the first non-empty line of the file matches `<!-- nomos: X -->` (where X is 0 or 1), version X is used.");
+    string.push_str(BREAK_DOUBLE_INDENT);
+    string.push_str("2. Project Configuration (nomos.json): If a 'version' key exists in the project configuration (e.g., \"version\": 1), it applies to all task files in that project.");
+    string.push_str(BREAK_DOUBLE_INDENT);
+    string.push_str("3. Global Configuration (config.json): If a 'version' key exists in the global configuration, it acts as the default fallback for all projects.");
+    string.push_str(BREAK_DOUBLE_INDENT);
+    string.push_str("4. Extension Inference: If no version is explicitly configured, files with a `.md` extension default to v0 rules, and files with a `.nomos` extension default to v1 rules.");
+    string.push_str(PARAGRAPH);
+}
+
 
 fn make_further_information(string: &mut String) {
     string.push_str("Further Information:");
