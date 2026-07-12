@@ -13,6 +13,7 @@ use crate::{
     utils::read_file,
 };
 
+/// Parses a file into Tasks.
 pub fn parse_file<P: Into<PathBuf>>(file_path: P, project: Option<String>) -> NomosResult<Tasks> {
     let file_path = file_path.into();
     let file = read_file(&file_path)?;

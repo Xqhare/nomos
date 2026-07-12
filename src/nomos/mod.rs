@@ -10,7 +10,8 @@ use crate::{
     utils::{TaskStatus, calc_line_size, read_file_u8, save_file_u8, shift_task_lines_by_offset},
 };
 
-mod utils;
+/// Utility functions for Nomos module
+pub mod utils;
 
 /// The main Nomos struct
 ///

@@ -168,17 +168,24 @@ impl Display for Task {
                 write!(f, "({char}) ")?;
             };
             write!(f, "{}", self.title)?;
-            write!(f, " :: ")?;
-            if let Some(inception_date) = self.inception_date {
-                write!(f, "{} ", inception_date.to_string())?;
-            }
-            if let Some(completion_date) = self.completion_date
-                && self.status == TaskStatus::Done
-            {
-                write!(f, "{} ", completion_date.to_string())?;
-            }
-            if let Some(description) = &self.description {
-                write!(f, "{}", description)?;
+            let has_metadata = self.inception_date.is_some()
+                || self.completion_date.is_some()
+                || self.description.as_deref().map_or(false, |d| !d.trim().is_empty())
+                || self.notes.is_some()
+                || self.sub_tasks.is_some();
+            if has_metadata {
+                write!(f, " :: ")?;
+                if let Some(inception_date) = self.inception_date {
+                    write!(f, "{} ", inception_date.to_string())?;
+                }
+                if let Some(completion_date) = self.completion_date
+                    && self.status == TaskStatus::Done
+                {
+                    write!(f, "{} ", completion_date.to_string())?;
+                }
+                if let Some(description) = &self.description {
+                    write!(f, "{}", description)?;
+                }
             }
             if let Some(notes) = &self.notes
                 && !notes.iter().count().eq(&0)

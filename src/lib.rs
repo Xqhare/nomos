@@ -29,13 +29,16 @@
 mod error;
 /// LSP integration
 pub mod lsp;
-mod nomos;
+/// Nomos main module
+pub mod nomos;
 mod notes;
-mod parser;
+/// Parser module
+pub mod parser;
 mod tags;
 mod task;
 mod utils;
-mod version;
+/// Version module
+pub mod version;
 
 pub use error::{NomosError, NomosResult};
 pub use nomos::Nomos;
