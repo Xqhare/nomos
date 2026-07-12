@@ -49,11 +49,11 @@ fn make_usage_file(string: &mut String) {
     string.push_str(DOUBLE_LINEBREAK);
     string.push_str("Example of a Nomos file:");
     string.push_str(LINEBREAK);
-    string.push_str("- [ ] (A) Integrate CLI toolkit :: 2026-05-22 Integrate Eshu +feature @src/main.rs\n\t- [ ] Setup argument builder :: Write command definitions\n\t- [x] Parse subcommands :: Test parser against standard inputs\n\t* Remember to check for std::env::args_os compatibility\n\t* Make sure we don't pull in any external parser dependencies\n- [B] Run Kahn Sort :: dep=\"Integrate CLI toolkit\" +feature @src/graph.rs");
+    string.push_str("- [ ] (1) Integrate CLI toolkit :: 2026-05-22 Integrate Eshu +feature @src/main.rs\n\t- [ ] Setup argument builder :: Write command definitions\n\t- [x] Parse subcommands :: Test parser against standard inputs\n\t* Remember to check for std::env::args_os compatibility\n\t* Make sure we don't pull in any external parser dependencies\n- [B] Run Kahn Sort :: dep=\"Integrate CLI toolkit\" +feature @src/graph.rs");
     string.push_str(DOUBLE_LINEBREAK);
-    string.push_str("Nomos uses newline separated tasks and notes.");
+    string.push_str("Nomos uses newline separated tasks and notes, allowing tasks to be embedded in standard markdown documents.");
     string.push_str(LINEBREAK);
-    string.push_str("Tasks start with a hyphen, '-', and notes start with an asterisk, '*'.");
+    string.push_str("Tasks start with a hyphen, '-', and notes start with an asterisk, '*'. Other lines are ignored by the relaxed parser.");
     string.push_str(DOUBLE_LINEBREAK);
     string.push_str("The syntax of a task is as follows:");
     string.push_str(BREAK_INDENT);
@@ -76,7 +76,7 @@ fn make_usage_cli(string: &mut String) {
     string.push_str(LINEBREAK);
     string.push_str("Update the `search_bases` key in the `config.json` file with paths pointing to the root directories containing the projects you want to track.");
     string.push_str(LINEBREAK);
-    string.push_str("Inside the `config.json` file, you can also update the `files` key with (\"project_name\": \"path/to/specific/file.md\") if you want to track specific files.");
+    string.push_str("Inside the `config.json` file, you can also update the `files` key with (\"project_name\": \"path/to/specific/file.nomos\") if you want to track specific files.");
     string.push_str(DOUBLE_LINEBREAK);
     string.push_str("Example:");
     string.push_str(LINEBREAK);
@@ -86,13 +86,13 @@ fn make_usage_cli(string: &mut String) {
     string.push_str(LINEBREAK);
     string.push_str("Nomos will look for a `nomos.json` inside the directory. If found it will read each file it finds held by the key `task_files`.");
     string.push_str(LINEBREAK);
-    string.push_str("If no `nomos.json` is found, Nomos will look for [nomos, todo, tasks, roadmap] files with either a `.txt` or `.md` extension inside that directory.");
+    string.push_str("If no `nomos.json` is found, Nomos will look for [nomos, todo, tasks, roadmap] files with a `.nomos` extension (or legacy `.md`/`.txt` files) inside that directory.");
     string.push_str(DOUBLE_LINEBREAK);
     string.push_str("Nomos will then parse each file and create a task for each task found.");
     string.push_str(DOUBLE_LINEBREAK);
     string.push_str("An example `nomos.json` file:");
     string.push_str(LINEBREAK);
-    string.push_str("{\n\t\"task_files\": [\n\t\t\"TODO.md\",\n\t\t\"docs/roadmap.md\"\n  ]\n}");
+    string.push_str("{\n\t\"task_files\": [\n\t\t\"TODO.nomos\",\n\t\t\"docs/roadmap.nomos\"\n  ]\n}");
     string.push_str(PARAGRAPH);
 }
 
@@ -107,15 +107,15 @@ fn make_further_information(string: &mut String) {
     string.push_str(DOUBLE_BREAK_INDENT);
     string.push_str("The status of a task can be one of the following:");
     string.push_str(BREAK_INDENT);
-    string.push_str("- [ ] Open\n\t- [/] In Progress\n\t- [x] Completed\n\t- [B] Blocked\n\t- [C] Cut\n\t- [D] Deferred");
+    string.push_str("- [ ] Open\n\t- [/] In Progress\n\t- [x] Done\n\t- [B] Blocked\n\t- [C] Cut\n\t- [D] Deferred");
     string.push_str(DOUBLE_BREAK_INDENT);
     string.push_str(
-        "The priority of a task can be A through Z (enclosed in brackets), or may be omitted.",
+        "The priority of a task can be 0 through 9 (enclosed in brackets), or may be omitted.",
     );
     string.push_str(BREAK_INDENT);
-    string.push_str("A is the highest priority, and Z is the lowest.");
+    string.push_str("1 is the highest standard priority, 9 is the lowest, and 0 is reserved for Extremely Important.");
     string.push_str(DOUBLE_BREAK_INDENT);
-    string.push_str("The title is all text after the status and priority, and before the double colon delimiter.");
+    string.push_str("The title is all text after the status and priority, and before the optional double colon delimiter.");
     string.push_str(BREAK_INDENT);
     string.push_str(
         "The title must be unique within the project. It is used to define dependencies between tasks.",
@@ -123,15 +123,15 @@ fn make_further_information(string: &mut String) {
     string.push_str(BREAK_INDENT);
     string.push_str("It has no maximum length.");
     string.push_str(DOUBLE_BREAK_INDENT);
-    string.push_str("The delimiter is a double colon (with leading and trailing whitespaces: ' :: '). Please note that the delimiter is required.");
+    string.push_str("The delimiter is a double colon (with leading and trailing whitespaces: ' :: '). Under v1, the delimiter is optional if a task only contains a title.");
     string.push_str(DOUBLE_BREAK_INDENT);
-    string.push_str("Immediatly following the delimiter are the following optional date fields:");
+    string.push_str("Immediately following the delimiter are the optional date fields:");
     string.push_str(BREAK_DOUBLE_INDENT);
     string.push_str("- InceptionDate (YYYY-MM-DD)\n\t\t- CompletionDate (YYYY-MM-DD)");
     string.push_str(BREAK_INDENT);
-    string.push_str("The InceptionDate is the date the task was created, and the CompletionDate is the date the task was completed. A CompletionDate may only be set if the status of a task is done ('[x]')");
+    string.push_str("The InceptionDate is the date the task was created, and the CompletionDate is the date the task was completed. A CompletionDate may only be set if the status of a task is resolved ('[x]' or '[C]')");
     string.push_str(DOUBLE_BREAK_INDENT);
-    string.push_str("Everything after the two date fields is the description of the task.");
+    string.push_str("Everything after the date fields is the description of the task.");
     string.push_str(BREAK_INDENT);
     string.push_str("The description also may contain tags and dependencies.");
     string.push_str(BREAK_INDENT);
@@ -143,7 +143,7 @@ fn make_further_information(string: &mut String) {
     string.push_str(BREAK_DOUBLE_INDENT);
     string.push_str("- +Kind\n\t\t- @Location\n\t\t- Key=Value");
     string.push_str(DOUBLE_BREAK_INDENT);
-    string.push_str("A `+KindTag` is defined with a leading plus '+'. It is used for Sematnic categorisation (like `+bug`, `+feature`) but may be any text without whitespace.");
+    string.push_str("A `+KindTag` is defined with a leading plus '+'. It is used for Semantic categorisation (like `+bug`, `+feature`) but may be any text without whitespace.");
     string.push_str(DOUBLE_BREAK_INDENT);
     string.push_str("An `@LocationTag` is defined with a leading at symbol '@'. It is used to define a location of a task (like `@src/main.rs`)");
     string.push_str(DOUBLE_BREAK_INDENT);
@@ -157,13 +157,14 @@ fn make_further_information(string: &mut String) {
     string.push_str(DOUBLE_LINEBREAK);
     string.push_str("Notes");
     string.push_str(BREAK_INDENT);
-    string.push_str("A note is defined with a leading asterisk '*'. It is similar to a taskDescription, but may not define a dependency.");
+    string.push_str("A note is defined with a leading asterisk '*'. It is similar to a taskDescription, but may not define a dependency. Under v1, indented lines not starting with '-' or '*' are ignored.");
     string.push_str(DOUBLE_LINEBREAK);
     string.push_str("Task Children");
     string.push_str(BREAK_INDENT);
-    string.push_str("A task may have zero or more task children. A task child is a task immediatly following the parent task, indented by tabs to the right.");
+    string.push_str("A task may have zero or more task children. A task child is a task immediately following the parent task, indented by 4 spaces.");
     string.push_str(BREAK_INDENT);
     string.push_str("The indentation level of a task child is part of the syntax.");
     string.push_str(BREAK_INDENT);
-    string.push_str("A parent task is implicitly dependent on all its child subtasks. A parent task cannot be marked completed (`[x]`) until all its child subtasks are completed.");
+    string.push_str("Parent tasks depend on their child subtasks. Child subtasks are sorted and scheduled before the parent task. A parent task cannot be marked done ('[x]') until all its child subtasks are resolved (either Done or Cut).");
 }
+

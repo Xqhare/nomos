@@ -59,19 +59,19 @@ On first execution, Nomos creates a `config.json` file inside `~/.config/nomos` 
 To get started:
 1. Run `nomos` by itself to initialize the config file.
 2. Update the `search_bases` key in `config.json` with the paths pointing to root directories containing the projects you want to track.
-3. You can also optionally update the `files` key with `"project_name": "path/to/specific/file.md"` if you want to track individual files directly.
+3. You can also optionally update the `files` key with `"project_name": "path/to/specific/file.nomos"` if you want to track individual files directly.
 
 For example, if the path `~/projects/rust` is present in `search_bases`, Nomos crawls each of its subdirectories:
 - It looks for a `nomos.json` file. If found, it reads each file specified by the key `task_files`.
-- If no `nomos.json` is found, it falls back to looking for files named `nomos`, `todo`, `tasks`, or `roadmap` with a `.txt` or `.md` extension in the project directory.
+- If no `nomos.json` is found, it falls back to looking for files named `nomos`, `todo`, `tasks`, or `roadmap` with a `.nomos` extension (or legacy `.md`/`.txt` files) in the project directory.
 - It parses all discovered files and creates a task for each one.
 
 An example `nomos.json` file:
 ```json
 {
   "task_files": [
-    "TODO.md",
-    "docs/roadmap.md"
+    "TODO.nomos",
+    "docs/roadmap.nomos"
   ]
 }
 ```
@@ -90,6 +90,10 @@ An example `nomos.json` file:
    ```bash
    nomos next
    ```
+4. Migrate legacy v0 projects/files to v1:
+   ```bash
+   nomos update
+   ```
 
 For more CLI options, run:
 ```bash
@@ -100,7 +104,10 @@ nomos --help
 
 ### Task File Syntax
 
-Nomos task files are standard Markdown lists with specific list markers:
+> [!note]
+> Nomos v1 supersedes the historic v0 version. Legacy v0 files using alphabetic priorities (A-Z) and mandatory delimiters can be automatically migrated to v1 (`.nomos`) using the `$ nomos update` CLI command.
+
+Nomos task files are standard Markdown lists, allowing tasks to be embedded directly within documents like `README.md` (non-task lines are skipped by the relaxed parser).
 - Tasks start with a hyphen (`-`) and must be followed by a status bracket (e.g., `- [ ]`).
 - Notes start with an asterisk (`*`) and provide details for the preceding task.
 
@@ -117,12 +124,12 @@ The syntax of a task is:
   - `[B]` Blocked
   - `[C]` Cut
   - `[D]` Deferred
-- **Priority** (Optional): A single uppercase letter `(A)` through `(Z)` enclosed in parentheses, where `(A)` is the highest priority and `(Z)` is the lowest.
-- **Title**: The unique title of the task preceding the double colon (` :: `) delimiter. It must be unique within its project to define dependencies.
-- **Delimiter**: A double colon with leading and trailing whitespace (` :: `) is required.
+- **Priority** (Optional): A single digit `(0)` through `(9)` enclosed in parentheses, where `(1)` is the highest priority, `(9)` is the lowest, and `(0)` is reserved for Extremely Important. If omitted, the scheduler treats the task as priority `5` (Important).
+- **Title**: The title of the task. It must be unique within its project.
+- **Delimiter**: A double colon with leading and trailing whitespace (` :: `) is optional, and is only required if dates, descriptions, tags, or dependencies are present. If omitted, the entire remaining text is parsed as the title.
 - **Dates** (Optional): Optional date fields in `YYYY-MM-DD` format.
   - One date: `[InceptionDate]`
-  - Two dates: `[InceptionDate] [CompletionDate]`. Note: `CompletionDate` can only be set if the status is completed (`[x]`).
+  - Two dates: `[InceptionDate] [CompletionDate]`. Note: `CompletionDate` can only be set if the status is resolved (`[x]` or `[C]`).
 - **Description**: The description follows the date fields. It can contain tags and dependencies.
 
 #### Tags
@@ -131,28 +138,28 @@ Nomos supports three types of tags:
 - `@Location`: Location/subsystem target (e.g., `@src/main.rs`), defined with a leading `@`.
 - `Key=Value`: Custom key-value pairs for metadata (e.g., `est=2d`, `owner=Xqhare`).
 
-#### Dependencies
+#### Dependencies & Kahn Sorting
 Dependencies are represented as special key-value pairs:
 - `dep="Dependency Title"` (same project)
 - `dep="project_name:Dependency Title"` (cross-project)
 
-A dependency is a task that must be completed before this task can be completed.
+Nomos schedules all tasks and subtasks using Kahn's topological sort:
+- **Parent-Child Dependency**: A parent task implicitly depends on its child subtasks. Child subtasks are sorted and scheduled *before* their parent task.
+- **Done vs. Cut**: A task marked as `Done` (`[x]`) can only explicitly depend on other completed (`Done`) tasks. If a dependency was `Cut` (`[C]`), the dependent task is blocked from completion. However, a parent task is allowed to be completed even if its subtasks were `Cut`.
 
 #### Notes
-Notes start with `*`. They are associated with the task immediately above them at their respective indentation level and cannot define dependencies.
+Notes start with `*`. They must be associated with the task immediately above them at their respective indentation level and cannot define dependencies. Under v1, other indented prose lines that do not start with `- ` or `* ` are ignored.
 
 #### Task Children / Hierarchy
-A parent task can have child tasks immediately following it, indented by tab characters. Indentation level is syntactically significant.
-- A parent task is implicitly dependent on all its child subtasks.
-- A parent task cannot be marked completed (`[x]`) until all its child subtasks are completed.
+A parent task can have child tasks immediately following it, indented by 4 spaces. Indentation level is syntactically significant.
 
 Example of a Nomos task file:
 ```markdown
-- [ ] (A) Integrate CLI toolkit :: 2026-05-22 Integrate Eshu +feature @src/main.rs
-	- [ ] Setup argument builder :: Write command definitions
-	- [x] Parse subcommands :: Test parser against standard inputs
-	* Remember to check for std::env::args_os compatibility
-	* Make sure we don't pull in any external parser dependencies
+- [ ] (1) Integrate CLI toolkit :: 2026-05-22 Integrate Eshu +feature @src/main.rs
+    - [ ] Setup argument builder :: Write command definitions
+    - [x] Parse subcommands :: Test parser against standard inputs
+    * Remember to check for std::env::args_os compatibility
+    * Make sure we don't pull in any external parser dependencies
 - [B] Run Kahn Sort :: dep="Integrate CLI toolkit" +feature @src/graph.rs
 ```
 
