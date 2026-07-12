@@ -35,9 +35,11 @@ mod parser;
 mod tags;
 mod task;
 mod utils;
+mod version;
 
 pub use error::{NomosError, NomosResult};
 pub use nomos::Nomos;
+pub use version::FormatVersion;
 /// Prelude
 ///
 /// Contains common types used in Nomos
