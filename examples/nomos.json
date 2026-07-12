@@ -1,6 +1,8 @@
 {
   "task_files": [
-    "nomos.md",
-    "docs/roadmap.md"
-  ]
+    "TODO.nomos",
+    "docs/roadmap.nomos"
+  ],
+  "version": 1,
+  "default_prio_level": 5
 }
