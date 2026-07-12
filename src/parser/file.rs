@@ -163,4 +163,23 @@ mod tests {
         assert_eq!(dep.title, "Add emoji support");
         assert_eq!(dep.project, Some("thoth".to_string()));
     }
+
+    #[test]
+    fn test_v1_optional_delimiter_and_digit_prio() {
+        let content = "\
+- [ ] (1) Simple task with no delimiter
+- [ ] (2) Another task :: 2026-07-12
+";
+        let path = Path::new("test_v1.md");
+        let tasks = parse_string(content, path, Some("proj".to_string())).unwrap();
+        let mut iter = tasks.iter();
+        
+        let t1 = iter.next().unwrap();
+        assert_eq!(t1.title, "Simple task with no delimiter");
+        assert_eq!(t1.priority, Some('1'));
+
+        let t2 = iter.next().unwrap();
+        assert_eq!(t2.title, "Another task");
+        assert_eq!(t2.priority, Some('2'));
+    }
 }

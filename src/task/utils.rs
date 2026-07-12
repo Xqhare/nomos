@@ -36,8 +36,8 @@ pub fn make_dates<'line>(line: &'line str) -> (Option<LocalDate>, Option<LocalDa
 
 pub fn make_title<'line>(
     line: &'line str,
-    file_path: &'line Path,
-    line_number: u32,
+    _file_path: &'line Path,
+    _line_number: u32,
 ) -> NomosResult<(&'line str, &'line str)> {
     let mut match_pattern = " :: ";
     // Slight relaxation of the parsing rules for small tasks with no following description
@@ -47,12 +47,7 @@ pub fn make_title<'line>(
     }
     match line.split_once(match_pattern) {
         Some((title, rest_line)) => Ok((title, rest_line)),
-        None => Err(NemesisError::new(
-            "nomos::parser::task::new_from_line",
-            NomosError::Parser(Parser::Task(format!(
-                "Could not split title and description. Did not find title delimiter: ' :: ' in line: {line}."
-            )))
-        ).add_ctx(format!("Line: {line_number} in file: {file_path:?}")))
+        None => Ok((line, "")),
     }
 }
 
@@ -68,13 +63,13 @@ pub fn make_priority<'line>(
                 .chars()
                 .next()
                 .expect("Priority is US-ASCII");
-            if prio.is_alphabetic() {
+            if prio.is_alphanumeric() {
                 Ok(Some(prio))
             } else {
                 return Err(NemesisError::new(
                     "nomos::parser::task::new_from_line",
                     NomosError::Parser(Parser::Task(format!(
-                        "Priority is not a letter. Got: {potential_priority}"
+                        "Priority is not alphanumeric. Got: {potential_priority}"
                     ))),
                 )
                 .add_ctx(format!("Line: {line_number} in file: {file_path:?}")));
