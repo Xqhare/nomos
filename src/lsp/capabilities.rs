@@ -352,7 +352,7 @@ mod tests {
 
     #[test]
     fn test_diagnostics_with_error() {
-        let content = "* Dangling note without task\n";
+        let content = "- invalid\n";
         let diag_val = get_diagnostics("file:///tmp/test.md", content);
         let obj = diag_val.as_object().unwrap();
         let diags = obj.get("diagnostics").unwrap().as_array().unwrap();

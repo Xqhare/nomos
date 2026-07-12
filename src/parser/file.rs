@@ -32,6 +32,21 @@ pub(crate) fn parse_string(
     let mut out: Vec<Task> = Vec::with_capacity(lines.size_hint().0);
     let mut line_number: u32 = 1;
 
+    // Detect and consume the HTML comment header `<!-- nomos: X -->` if it is the first non-empty line
+    while let Some(line) = lines.peek() {
+        if line.is_empty() {
+            lines.next();
+            line_number = line_number.saturating_add(1);
+        } else {
+            let trimmed = line.trim();
+            if trimmed.starts_with("<!-- nomos:") && trimmed.ends_with("-->") {
+                lines.next();
+                line_number = line_number.saturating_add(1);
+            }
+            break;
+        }
+    }
+
     while let Some(line) = lines.next() {
         if line.is_empty() {
             line_number = line_number.saturating_add(1);
@@ -86,20 +101,12 @@ pub(crate) fn parse_line(
             indent_level,
             project,
         )?);
-    } else {
-        if indent_level == 0 {
-            // Dangling note or invalid line
-            return Err(NemesisError::new(
-                "nomos::parser::file::parse_line",
-                NomosError::Parser(Parser::Note(format!(
-                    "Dangling note or Invalid line: {line}"
-                ))),
-            )
-            .add_ctx(format!("Line: {line_number} in file: {file_path:?}")));
-        } else {
-            // Note
+    } else if line.starts_with("* ") {
+        if indent_level > 0 {
             note_out.push(Note::new_from_line(line, &file_path, line_number)?);
         }
+    } else {
+        // Ignored line
     }
     Ok(())
 }
@@ -181,5 +188,35 @@ mod tests {
         let t2 = iter.next().unwrap();
         assert_eq!(t2.title, "Another task");
         assert_eq!(t2.priority, Some('2'));
+    }
+
+    #[test]
+    fn test_relaxed_markdown_parsing() {
+        let content = "\
+# README
+This is a standard markdown file description.
+
+- [ ] Real Task :: +tag
+    * Valid note
+    Some random paragraph to ignore under subtask level.
+- [ ] Another Real Task
+";
+        let path = Path::new("README.md");
+        let tasks = parse_string(content, path, Some("proj".to_string())).unwrap();
+        assert_eq!(tasks.iter().count(), 2);
+    }
+
+    #[test]
+    fn test_html_comment_header_parsing() {
+        let content = "\
+<!-- nomos: 1 -->
+- [ ] Comment Task
+";
+        let path = Path::new("tasks.nomos");
+        let tasks = parse_string(content, path, Some("proj".to_string())).unwrap();
+        assert_eq!(tasks.iter().count(), 1);
+        let t = tasks.iter().next().unwrap();
+        assert_eq!(t.title, "Comment Task");
+        assert_eq!(t.file_data.line, 2);
     }
 }
