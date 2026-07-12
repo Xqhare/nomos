@@ -221,7 +221,7 @@ pub fn sub_at_line(text: &str, line_number: i64, file_path: &Path) -> NomosResul
     })?;
     let mut file = file.lines().collect::<Vec<&str>>();
 
-    file[line_number as usize] = text;
+    file[line_number.saturating_sub(1) as usize] = text;
 
     save_file_u8(file_path, &file.join("\n").as_bytes()).add_ctx("Sub_at_line failed.")
 }

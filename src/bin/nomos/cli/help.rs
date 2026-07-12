@@ -38,6 +38,7 @@ fn make_usage(string: &mut String) {
     string.push_str(" ) for more information about it.");
     string.push_str(DOUBLE_LINEBREAK);
     string.push_str("You can find example files for all files talked about on this page in the Nomos repository (at: https://github.com/Xqhare/nomos/blob/master/examples )");
+    string.push_str(DOUBLE_LINEBREAK);
     make_usage_file(string);
     make_usage_cli(string);
     make_further_information(string);
