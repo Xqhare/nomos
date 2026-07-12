@@ -1,5 +1,7 @@
 - [ ] (A) Write doc ::
-    - [ ] Doc updates :: 
+    - [ ] Doc updates ::
+        - [ ] Ensure generic tag is documented ::
+            * #tags are tags too, but missing from the help page for example
         - [ ] standard markers :: Only dirs with standard project markers are considered as projects @nomos/utils.rs
         - [x] -h flag :: rework / expand help output
     - [x] (A) Especially Readme ::
