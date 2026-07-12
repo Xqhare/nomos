@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, path::PathBuf};
+use std::{collections::{BTreeMap, HashMap}, path::PathBuf};
 
 use mawu::read::json;
 use nemesis::{NemesisError, NemesisResultExt};
@@ -46,7 +46,9 @@ impl Nomos {
             &global_config_file
         ))?;
 
-        let tasks: Tasks = sort_tasks(parse_tasks(make_paths_to_crawl(&config)?)?)?;
+        let parsed_tasks = parse_tasks(make_paths_to_crawl(&config)?)?;
+        validate_dependencies(&parsed_tasks)?;
+        let tasks: Tasks = sort_tasks(parsed_tasks)?;
 
         Ok(Nomos { tasks })
     }
@@ -575,5 +577,179 @@ impl Nomos {
             }
         }
         sort_tasks(all_tasks)
+    }
+}
+
+fn collect_tasks<'a>(
+    task: &'a Task,
+    project_name: &str,
+    parent_titles: &mut Vec<String>,
+    flat_tasks: &mut HashMap<String, &'a Task>,
+) {
+    let current_id = if parent_titles.is_empty() {
+        format!("{project_name}:{}", task.title)
+    } else {
+        format!("{project_name}:{}:{}", parent_titles.join(":"), task.title)
+    };
+
+    flat_tasks.insert(current_id, task);
+
+    if let Some(sub_tasks) = &task.sub_tasks {
+        for sub_task in sub_tasks.iter() {
+            parent_titles.push(task.title.clone());
+            collect_tasks(sub_task, project_name, parent_titles, flat_tasks);
+            parent_titles.pop();
+        }
+    }
+}
+
+fn validate_dependencies(all_project_tasks: &BTreeMap<String, Tasks>) -> NomosResult<()> {
+    let mut flat_tasks = HashMap::new();
+    for (project_name, tasks) in all_project_tasks.iter() {
+        for task in tasks.iter() {
+            let mut parent_titles = Vec::new();
+            collect_tasks(task, project_name, &mut parent_titles, &mut flat_tasks);
+        }
+    }
+
+    for (current_id, task) in &flat_tasks {
+        if task.status == TaskStatus::Done {
+            for dependency in task.dependencies.iter() {
+                let dep_project = dependency.project.as_ref().unwrap_or(&task.project);
+                let matched_task = flat_tasks.keys().find(|key| {
+                    if let Some((first, _)) = key.split_once(':') {
+                        if first == dep_project {
+                            if let Some(last) = key.rsplit(':').next() {
+                                if last == dependency.title {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    false
+                }).and_then(|key| flat_tasks.get(key));
+
+                if let Some(dep_task) = matched_task {
+                    if dep_task.status != TaskStatus::Done {
+                        return Err(NemesisError::new(
+                            "nomos::validate_dependencies",
+                            NomosError::Task(format!(
+                                "Done task '{}' depends on task '{}' which is not Done (status: {:?})",
+                                task.title, dep_task.title, dep_task.status
+                            )),
+                        )
+                        .add_ctx(format!("Task: {current_id}")));
+                    }
+                } else {
+                    return Err(NemesisError::new(
+                        "nomos::validate_dependencies",
+                        NomosError::Task(format!(
+                            "Done task '{}' depends on task '{}' which does not exist",
+                            task.title, dependency.title
+                        )),
+                    )
+                    .add_ctx(format!("Task: {current_id}")));
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::File;
+    use std::io::Write;
+
+    #[test]
+    fn test_nomos_done_task_depends_on_cut_task() {
+        let temp_dir = std::env::temp_dir();
+        let uuid = rand_uuid();
+        let config_path = temp_dir.join(format!("config_{}.json", uuid));
+        let task_path = temp_dir.join(format!("tasks_{}.nomos", uuid));
+
+        // Write tasks
+        let mut task_file = File::create(&task_path).unwrap();
+        writeln!(
+            task_file,
+            "\
+- [x] Done Task :: dep=\"Cut Task\"
+- [C] Cut Task ::
+"
+        )
+        .unwrap();
+
+        // Write config
+        let mut config_file = File::create(&config_path).unwrap();
+        writeln!(
+            config_file,
+            r#"{{
+  "search_bases": [],
+  "files": {{
+    "proj": "{}"
+  }}
+}}"#,
+            task_path.to_str().unwrap().replace('\\', "/")
+        )
+        .unwrap();
+
+        let res = Nomos::new(&config_path);
+        // Clean up
+        let _ = std::fs::remove_file(&config_path);
+        let _ = std::fs::remove_file(&task_path);
+
+        assert!(res.is_err());
+        let err_msg = format!("{:?}", res.err().unwrap());
+        assert!(err_msg.contains("depends on task"));
+    }
+
+    #[test]
+    fn test_nomos_done_task_depends_on_done_task() {
+        let temp_dir = std::env::temp_dir();
+        let uuid = rand_uuid();
+        let config_path = temp_dir.join(format!("config_{}.json", uuid));
+        let task_path = temp_dir.join(format!("tasks_{}.nomos", uuid));
+
+        // Write tasks
+        let mut task_file = File::create(&task_path).unwrap();
+        writeln!(
+            task_file,
+            "\
+- [x] Done Task 1 :: dep=\"Done Task 2\"
+- [x] Done Task 2 ::
+"
+        )
+        .unwrap();
+
+        // Write config
+        let mut config_file = File::create(&config_path).unwrap();
+        writeln!(
+            config_file,
+            r#"{{
+  "search_bases": [],
+  "files": {{
+    "proj": "{}"
+  }}
+}}"#,
+            task_path.to_str().unwrap().replace('\\', "/")
+        )
+        .unwrap();
+
+        let res = Nomos::new(&config_path);
+        // Clean up
+        let _ = std::fs::remove_file(&config_path);
+        let _ = std::fs::remove_file(&task_path);
+
+        assert!(res.is_ok(), "Failed: {:?}", res.err());
+    }
+
+    fn rand_uuid() -> String {
+        use std::hash::{BuildHasher, Hasher};
+        let val: u32 = std::collections::hash_map::RandomState::new()
+            .build_hasher()
+            .finish() as u32;
+        format!("{:08x}", val)
     }
 }
