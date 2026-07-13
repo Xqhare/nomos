@@ -639,7 +639,8 @@ fn validate_dependencies(all_project_tasks: &BTreeMap<String, Tasks>) -> NomosRe
                                 task.title, dep_task.title, dep_task.status
                             )),
                         )
-                        .add_ctx(format!("Task: {current_id}")));
+                        .add_ctx(format!("Task: {current_id}"))
+                        .add_ctx(format!("Line: {} in file: {:?}", task.file_data.line, task.file_data.path)));
                     }
                 } else {
                     return Err(NemesisError::new(
@@ -649,7 +650,8 @@ fn validate_dependencies(all_project_tasks: &BTreeMap<String, Tasks>) -> NomosRe
                             task.title, dependency.title
                         )),
                     )
-                    .add_ctx(format!("Task: {current_id}")));
+                    .add_ctx(format!("Task: {current_id}"))
+                    .add_ctx(format!("Line: {} in file: {:?}", task.file_data.line, task.file_data.path)));
                 }
             }
         }
@@ -704,6 +706,7 @@ mod tests {
         assert!(res.is_err());
         let err_msg = format!("{:?}", res.err().unwrap());
         assert!(err_msg.contains("depends on task"));
+        assert!(err_msg.contains("Line: 1 in file:"));
     }
 
     #[test]
