@@ -1,0 +1,12 @@
+{
+  "name": "nomos-tree-sitter",
+  "version": "1.0.0",
+  "description": "tree sitter for nomos files",
+  "license": "MIT",
+  "author": "Xqhare",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
