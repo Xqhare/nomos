@@ -600,7 +600,10 @@ mod tests {
         // Subtask A and B (Done and Cut) should be filtered out.
         // Subtask C (Open) and Parent P (Open) should remain.
         assert_eq!(sorted_list.len(), 2);
-        assert_eq!(sorted_list[0].title, "Subtask C");
+        let subtask_c = sorted_list[0];
+        assert_eq!(subtask_c.title, "Subtask C");
+        assert_eq!(subtask_c.parent_titles, vec!["Parent P".to_string()]);
+        assert!(format!("{:#}", subtask_c).contains("Child of: Parent P"));
         assert_eq!(sorted_list[1].title, "Parent P");
     }
 }
