@@ -117,6 +117,7 @@ pub fn get_completions(
     ]);
     let mut location_tags = HashSet::new();
     let mut metadata_keys = HashSet::new();
+    let mut generic_tags = HashSet::new();
 
     if let Some(n) = nomos {
         fn collect_tags_recursively(
@@ -124,6 +125,7 @@ pub fn get_completions(
             kind_tags: &mut HashSet<String>,
             location_tags: &mut HashSet<String>,
             metadata_keys: &mut HashSet<String>,
+            generic_tags: &mut HashSet<String>,
         ) {
             for kind in &task.tags.kind_tags {
                 kind_tags.insert(kind.clone());
@@ -133,6 +135,9 @@ pub fn get_completions(
             }
             for key in task.tags.metadata_tags.keys() {
                 metadata_keys.insert(key.clone());
+            }
+            for tag in &task.tags.generic_tags {
+                generic_tags.insert(tag.clone());
             }
 
             if let Some(notes) = &task.notes {
@@ -146,18 +151,21 @@ pub fn get_completions(
                     for key in note.tags.metadata_tags.keys() {
                         metadata_keys.insert(key.clone());
                     }
+                    for tag in &note.tags.generic_tags {
+                        generic_tags.insert(tag.clone());
+                    }
                 }
             }
 
             if let Some(sub_tasks) = &task.sub_tasks {
                 for sub_task in sub_tasks.iter() {
-                    collect_tags_recursively(sub_task, kind_tags, location_tags, metadata_keys);
+                    collect_tags_recursively(sub_task, kind_tags, location_tags, metadata_keys, generic_tags);
                 }
             }
         }
 
         for task in n.get_tasks().iter() {
-            collect_tags_recursively(task, &mut kind_tags, &mut location_tags, &mut metadata_keys);
+            collect_tags_recursively(task, &mut kind_tags, &mut location_tags, &mut metadata_keys, &mut generic_tags);
         }
     }
 
@@ -174,6 +182,14 @@ pub fn get_completions(
         for kind in kind_tags {
             let mut item = Object::new();
             item.insert("label", XffValue::from(kind));
+            item.insert("kind", XffValue::from(14)); // Keyword/Tag
+            items.push(XffValue::from(item));
+        }
+    } else if last_word.starts_with('#') {
+        // Generic Tag completion
+        for tag in generic_tags {
+            let mut item = Object::new();
+            item.insert("label", XffValue::from(tag));
             item.insert("kind", XffValue::from(14)); // Keyword/Tag
             items.push(XffValue::from(item));
         }
@@ -571,5 +587,47 @@ mod tests {
         let obj = diag_val.as_object().unwrap();
         let diags = obj.get("diagnostics").unwrap().as_array().unwrap();
         assert!(diags.is_empty(), "Expected no diagnostics, but got: {:?}", diags);
+    }
+
+    #[test]
+    fn test_generic_tag_completions() {
+        let temp_dir = env::temp_dir().join(format!("nomos_test_generic_comp_{}", std::process::id()));
+        fs::create_dir_all(&temp_dir).unwrap();
+
+        let task_file = temp_dir.join("tasks.nomos");
+        fs::write(
+            &task_file,
+            "- [ ] Tagged Task :: #important #todo\n    * Note with #refactor\n"
+        ).unwrap();
+
+        let config_file = temp_dir.join("config.json");
+        let config_content = format!(
+            r#"{{"search_bases":[], "files":{{"my_proj":"{}"}}}}"#,
+            task_file.to_str().unwrap().replace('\\', "/")
+        );
+        fs::write(&config_file, config_content).unwrap();
+
+        let nomos = Nomos::new(&config_file).ok();
+        assert!(nomos.is_some());
+
+        let comps = get_completions(&nomos, "Task #", 6, "my_proj");
+        let items = comps.as_array().unwrap();
+        let labels: Vec<&str> = items
+            .iter()
+            .map(|item| {
+                item.as_object()
+                    .unwrap()
+                    .get("label")
+                    .unwrap()
+                    .as_string()
+                    .unwrap()
+                    .as_str()
+            })
+            .collect();
+        assert!(labels.contains(&"important"));
+        assert!(labels.contains(&"todo"));
+        assert!(labels.contains(&"refactor"));
+
+        let _ = fs::remove_dir_all(&temp_dir);
     }
 }

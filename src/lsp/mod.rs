@@ -99,6 +99,7 @@ impl LspServer {
                 completion.insert(
                     "triggerCharacters",
                     XffValue::from(vec![
+                        XffValue::from("#"),
                         XffValue::from("+"),
                         XffValue::from("@"),
                         XffValue::from("\""),
