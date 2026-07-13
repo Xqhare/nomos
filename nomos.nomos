@@ -1,28 +1,42 @@
 - [ ] (1) Write doc :: 
     - [ ] Doc updates :: 
         - [ ] Ensure generic tag is documented :: 
-                * #tags are tags too, but missing from the help page for example        - [ ] standard markers :: Only dirs with standard project markers are considered as projects @nomos/utils.rs        - [x] -h flag :: rework / expand help output    - [x] (1) Especially Readme
+            * #tags are tags too, but missing from the help page for example        
+	    - [ ] standard markers :: Only dirs with standard project markers are considered as projects @nomos/utils.rs        
+	    - [x] -h flag :: rework / expand help output   
+	    - [x] (1) Especially Readme
 - [ ] Write tests
 - [ ] Subcommands :: 
     - [C] Add TUI subcommand :: @bin/nomos/cli dep=talos:"State rework"
-        * At a later stage, a lot of work -> Looking at ananke, a large part could be reused, or at least copied and modified    - [ ] Refactor subcommand executions :: They share a lot of common code. @bin/nomos/cli
+        * At a later stage, a lot of work -> Looking at ananke, a large part could be reused, or at least copied and modified    
+	- [ ] Refactor subcommand executions :: They share a lot of common code. @bin/nomos/cli
 - [ ] Sort done last :: Done tasks should always be at the end
 - [ ] (1) Update priority sorting :: Tasks with no priority should be in the middle (not at the end)
-* `M` or `N` could be used* This way its easier to sort my tasks +Task* Configurable via the global config file and overruled by the project config file
+	* `M` or `N` could be used* This way its easier to sort my tasks +Task* Configurable via the global config file and overruled by the project config file
 - [ ] (3) Nvim integration :: 
-    - [x] Create a LSP server for nomos    - [ ] Code Highlighting :: A nvim plugin would be nice to make the files look nicer (and easier to read at a glance)
+    - [x] Create a LSP server for nomos    
+    - [ ] Code Highlighting :: A nvim plugin would be nice to make the files look nicer (and easier to read at a glance)
 - [ ] Improve LSP server :: 
-* Dependencies work as intended
-    - [x] kind tags :: `+tag` behaves weird. typing in `+` only shows one tag, `Game` (wherever that one comes from) and nothing else. +Bug    - [x] location tags :: `@tag` behaves weird. typing in `@` only shows: `@README.md`, `@xqhare.net` and `@randomiserProject`.    - [x] KV tags :: key=value tags also dont work; entering `key=` doesnt even open the popup    - [ ] Improve file detection :: Nomos LSP is running on every Markdown file
+    * Dependencies work as intended
+    - [x] kind tags :: `+tag` behaves weird. typing in `+` only shows one tag, `Game` (wherever that one comes from) and nothing else. +Bug    
+    - [x] location tags :: `@tag` behaves weird. typing in `@` only shows: `@README.md`, `@xqhare.net` and `@randomiserProject`.    
+    - [x] KV tags :: key=value tags also dont work; entering `key=` doesnt even open the popup    
+    - [ ] Improve file detection :: Nomos LSP is running on every Markdown file
         * Thankfully only the first error is displayed
         - [ ] Autocomplete :: seems to pull from all Markdown files of the project?
-                * Or it doesnt? where does the autocomplete for `f` come from? `-f=` and -f=                * That smells like the nomos -h help page; but that is inside .rs files??    - [ ] Only the very first error of the file is displayed :: +Bug
+	    * Or it doesnt? where does the autocomplete for `f` come from? `-f=` and -f=                
+	    * That smells like the nomos -h help page; but that is inside .rs files??    
+	    - [ ] Only the very first error of the file is displayed :: +Bug
 - [x] Help page :: 
     - [x] Update help page :: @nomos/help.rs with better about section. Usage is only partialy right and needs more formatting work in general.
-        * Global Config and its fields        * Update that all output is sorted by a modified kahn algorithm        * Inter project dependency feature explained    - [x] Add examples :: @nomos/help.rs
-        * Simple usage / task definition examples like: `- [ ] Task Name :: Task Description` `- [ ] Task tite ::` `- [X] Task title ::`        * Maybe even the dependency syntax
+	* Global Config and its fields        
+	* Update that all output is sorted by a modified kahn algorithm        
+	* Inter project dependency feature explained    
+	- [x] Add examples :: @nomos/help.rs
+        * Simple usage / task definition examples like: `- [ ] Task Name :: Task Description` `- [ ] Task tite ::` `- [X] Task title ::`        
+	* Maybe even the dependency syntax
 - [x] (1) Dependencies dont seem to work :: 
-* Mawu has a task dependent on thoth (add emoji support) but mawus task is sorted way infront of thoths
+    * Mawu has a task dependent on thoth (add emoji support) but mawus task is sorted way infront of thoths
 - [ ] (1) Move code :: @nomos/utils.rs can be moved out into the std lib when dep=software_ideas:"create my own std library in rust"
-- [ ] (1) Sub task dependencies are ignored :: 
-* Easy fix: push each sub task into the flattened kahn list depending on the parent. rest should work as is.
+- [x] (1) Sub task dependencies are ignored :: 
+    * Easy fix: push each sub task into the flattened kahn list depending on the parent. rest should work as is.
