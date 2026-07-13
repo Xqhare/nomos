@@ -6,8 +6,8 @@
 	- [x] -h flag :: rework / expand help output   
 	- [x] (1) Especially Readme
 - [ ] Write tests
-- [ ] Subcommands :: 
-    - [C] Add TUI subcommand :: @bin/nomos/cli dep=talos:"State rework"
+- [ ] Subcommands
+    - [ ] (9) Add TUI subcommand :: @bin/nomos/cli dep=talos:"State rework" For display only. To keep scope low.
         * At a later stage, a lot of work -> Looking at ananke, a large part could be reused, or at least copied and modified    
     - [ ] Refactor subcommand executions :: They share a lot of common code. @bin/nomos/cli
 - [ ] Sort done last :: Done tasks should always be at the end
@@ -45,3 +45,6 @@
 - [ ] (1) Move code :: @nomos/utils.rs can be moved out into the std lib when dep=software_ideas:"create my own std library in rust"
 - [x] (1) Sub task dependencies are ignored :: 
     * Easy fix: push each sub task into the flattened kahn list depending on the parent. rest should work as is.
+- [ ] test task :: 2026-07-14 why is date white?
+    * Inspect returns 'no items found' for some reason
+- [x] test task done :: 2026-07-13 2026-07-14 both dates are white

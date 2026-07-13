@@ -7,7 +7,7 @@ You can learn more about that [here](https://blog.xqhare.net/posts/why_solve_pro
 
 > [!note]
 > As of right now, Nomos is a work in progress.
-> The parser is stableish, but consider the entire project a minimum viable product.
+> The parser is stableish, but consider the entire project a minimum viable product at best.
 
 ## Roadmap
 
@@ -23,7 +23,8 @@ All nomos files follow the syntax defined [here](https://github.com/Xqhare/nomos
 - LSP Server
 - Command Line Tool
 - Parsing Library
-- Nomos file specification
+- Nomos File Specification
+- Tree-sitter Grammar for Syntax Highlighting
 
 ## Naming
 
@@ -35,9 +36,16 @@ Nomos was a lesser Greek deity of laws, statutes, and ordinances.
 ## Usage
 
 Nomos is available to be used both as a command line tool and as a Rust library.
-It also provides an LSP server for Neovim.
+It also provides an LSP server as well as tree-sitter grammar and syntax highlighting for Neovim.
 
-### LSP Server
+### Neovim Integration
+
+Inside the [example](https://github.com/Xqhare/nomos/blob/master/examples/) directory, you can find a Neovim configuration that uses Nomos as a LSP server and integrates the tree sitter for syntax highlighting.
+You will also find a `nomos.so` and `highlights.scm` file in the same directory.
+
+Link or move them to `~/.local/share/nvim/site/parser/nomos.so` and `~/.config/nvim/queries/nomos/highlights.scm` respectively.
+
+#### LSP Server
 
 To use this server, you can run it from the command line:
 

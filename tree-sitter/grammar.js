@@ -81,6 +81,7 @@ module.exports = grammar({
 			$.generic_tag,
 			$.dependency_tag,
 			$.kv_tag,
+			$.date,
 			$._text_word
 		)),
 
@@ -98,14 +99,12 @@ module.exports = grammar({
 		))),
 		_text_word: $ => token(prec(1, /[^\s]+/)),
 
-		dates: $ => seq(
-			choice(
-				$.date,
-				seq($.date, $.date)
-			)
+		dates: $ => choice(
+			prec(3, seq($.date, $.date)),
+			prec(2, $.date)
 		),
 
-		date: $ => /\d{4}-\d{2}-\d{2}/,
+		date: $ => token(prec(2, /\d{4}-\d{2}-\d{2}/)),
 
 		ignored_line: $ => seq(
 			token(prec(-1, /[^\r\n]+/)),

@@ -1,19 +1,20 @@
+; More: https://neovim.io/doc/user/treesitter/#treesitter-highlight-groups
 ; --- Basic Task Structure ---
 
 ; Match the task marker prefix (e.g., - [)
 (task_marker) @punctuation.special
 
 ; Match the status block (e.g., [x])
-(stat) @type
+(stat) @markup.raw
 
 ; Match the priority (e.g., (1))
 (prio) @number
 
 ; Match the task title
-(title) @markup.heading
+(title) @character
 
 ; Match the :: delimiter
-(delimiter) @punctuation.delimiter
+(delimiter) @markup.heading
 
 ; Match dates (e.g., 2026-07-12)
 (date) @string.special
@@ -21,7 +22,7 @@
 ; --- Notes / Comments ---
 
 ; Treat the entire note line as a comment
-(comment) @comment
+(comment) @type
 
 ; --- Tags ---
 

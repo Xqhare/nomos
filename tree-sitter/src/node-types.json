@@ -42,6 +42,10 @@
       "required": false,
       "types": [
         {
+          "type": "date",
+          "named": true
+        },
+        {
           "type": "dependency_tag",
           "named": true
         },

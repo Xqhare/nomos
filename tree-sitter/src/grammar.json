@@ -334,6 +334,10 @@
           },
           {
             "type": "SYMBOL",
+            "name": "date"
+          },
+          {
+            "type": "SYMBOL",
             "name": "_text_word"
           }
         ]
@@ -428,35 +432,45 @@
       }
     },
     "dates": {
-      "type": "SEQ",
+      "type": "CHOICE",
       "members": [
         {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "date"
-            },
-            {
-              "type": "SEQ",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "date"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "date"
-                }
-              ]
-            }
-          ]
+          "type": "PREC",
+          "value": 3,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "date"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "date"
+              }
+            ]
+          }
+        },
+        {
+          "type": "PREC",
+          "value": 2,
+          "content": {
+            "type": "SYMBOL",
+            "name": "date"
+          }
         }
       ]
     },
     "date": {
-      "type": "PATTERN",
-      "value": "\\d{4}-\\d{2}-\\d{2}"
+      "type": "TOKEN",
+      "content": {
+        "type": "PREC",
+        "value": 2,
+        "content": {
+          "type": "PATTERN",
+          "value": "\\d{4}-\\d{2}-\\d{2}"
+        }
+      }
     },
     "ignored_line": {
       "type": "SEQ",
