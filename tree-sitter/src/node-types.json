@@ -4,9 +4,13 @@
     "named": true,
     "fields": {},
     "children": {
-      "multiple": false,
-      "required": false,
+      "multiple": true,
+      "required": true,
       "types": [
+        {
+          "type": "comment_marker",
+          "named": true
+        },
         {
           "type": "description",
           "named": true
@@ -71,11 +75,6 @@
     "fields": {}
   },
   {
-    "type": "prio",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "source_file",
     "named": true,
     "root": true,
@@ -108,6 +107,26 @@
     }
   },
   {
+    "type": "stat",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "stat_char",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "stat_char",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "task",
     "named": true,
     "fields": {},
@@ -136,11 +155,20 @@
           "named": true
         },
         {
+          "type": "task_marker",
+          "named": true
+        },
+        {
           "type": "title",
           "named": true
         }
       ]
     }
+  },
+  {
+    "type": "title",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "version",
@@ -156,19 +184,11 @@
     "named": false
   },
   {
-    "type": "(",
+    "type": " ",
     "named": false
   },
   {
-    "type": ")",
-    "named": false
-  },
-  {
-    "type": "*",
-    "named": false
-  },
-  {
-    "type": "-",
+    "type": "/",
     "named": false
   },
   {
@@ -176,11 +196,39 @@
     "named": false
   },
   {
-    "type": "[",
+    "type": "B",
+    "named": false
+  },
+  {
+    "type": "C",
+    "named": false
+  },
+  {
+    "type": "D",
+    "named": false
+  },
+  {
+    "type": "X",
     "named": false
   },
   {
     "type": "]",
+    "named": false
+  },
+  {
+    "type": "b",
+    "named": false
+  },
+  {
+    "type": "c",
+    "named": false
+  },
+  {
+    "type": "comment_marker",
+    "named": true
+  },
+  {
+    "type": "d",
     "named": false
   },
   {
@@ -212,11 +260,15 @@
     "named": true
   },
   {
-    "type": "stat",
+    "type": "prio",
     "named": true
   },
   {
-    "type": "title",
+    "type": "task_marker",
     "named": true
+  },
+  {
+    "type": "x",
+    "named": false
   }
 ]

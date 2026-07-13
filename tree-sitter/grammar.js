@@ -4,9 +4,10 @@ module.exports = grammar({
 	extras: $ => [/[ \t\f\v]/],
 
 	conflicts: $ => [
-		[$.version, $.ignored_line],
-		[$.task, $.ignored_line],
-		[$.comment, $.ignored_line],
+		[$.version],
+		[$.task],
+		[$.comment],
+		[$.ignored_line],
 	],
 
 	rules: {
@@ -19,13 +20,13 @@ module.exports = grammar({
 		)),
 
 		// future proof for all versions (0-inf)
-		version: $ => prec.dynamic(2, seq(
+		version: $ => seq(
 			/<!--[\s]+nomos:[\s]+[0-9]+[\s]+-->/,
-			$._eol
-		)),
+			optional($._eol)
+		),
 
-		task: $ => prec.dynamic(2, seq(
-			'-',
+		task: $ => seq(
+			$.task_marker,
 			$.stat,
 			optional($.prio),
 			$.title,
@@ -34,18 +35,24 @@ module.exports = grammar({
 				optional($.dates),
 				optional($.description)
 			)),
-			$._eol
-		)),
+			optional($._eol)
+		),
 
-		comment: $ => prec.dynamic(2, seq(
-			'*',
+		task_marker: $ => token(prec(1, seq('-', /[ \t]*/, '['))),
+
+		comment: $ => seq(
+			$.comment_marker,
 			optional($.description),
-			$._eol
-		)),
+			optional($._eol)
+		),
+
+		comment_marker: $ => token(prec(1, seq('*', /[ \t]+/))),
 
 		delimiter: $ => '::',
 
-		stat: $ => token(prec(10, seq('[', choice(
+		stat: $ => seq($.stat_char, ']'),
+
+		stat_char: $ => choice(
 			'b',
 			'B',
 			'c',
@@ -56,11 +63,17 @@ module.exports = grammar({
 			'X',
 			' ',
 			'/',
-		), ']'))),
+		),
 
-		prio: $ => seq('(', /[0-9a-zA-Z]/, ')'),
+		prio: $ => token(prec(2, /\([0-9a-zA-Z]\)/)),
 
-		title: $ => token(prec(1, /([^:\r\n]|:[^:\r\n])+/)),
+		title: $ => repeat1(choice(
+			$._title_word,
+			/[()]/,
+			':',
+		)),
+
+		_title_word: $ => /[^:\r\n\s()]+/,
 
 		description: $ => repeat1(choice(
 			$.kind_tag,
@@ -94,19 +107,10 @@ module.exports = grammar({
 
 		date: $ => /\d{4}-\d{2}-\d{2}/,
 
-		ignored_line: $ => prec.dynamic(1, seq(
-			repeat1(choice(
-				/[^\r\n\s\[\]\(\)\-\*:]+/,
-				'[',
-				']',
-				'-',
-				'*',
-				'(',
-				')',
-				':',
-			)),
-			$._eol
-		)),
+		ignored_line: $ => seq(
+			token(prec(-1, /[^\r\n]+/)),
+			optional($._eol)
+		),
 
 		empty_line: $ => $._eol,
 
