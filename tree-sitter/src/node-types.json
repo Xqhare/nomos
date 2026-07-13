@@ -5,7 +5,7 @@
     "fields": {},
     "children": {
       "multiple": false,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "description",
@@ -30,105 +30,12 @@
     }
   },
   {
-    "type": "dependency_tag",
-    "named": true,
-    "fields": {}
-  },
-  {
     "type": "description",
     "named": true,
     "fields": {},
     "children": {
       "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "tag",
-          "named": true
-        },
-        {
-          "type": "text",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "generic_tag",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "kind_tag",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "kv_tag",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "location_tag",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "prio",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "source_file",
-    "named": true,
-    "root": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "comment",
-          "named": true
-        },
-        {
-          "type": "task",
-          "named": true
-        },
-        {
-          "type": "version",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "stat",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
-      "types": [
-        {
-          "type": "stat_char",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
-    "type": "stat_char",
-    "named": true,
-    "fields": {}
-  },
-  {
-    "type": "tag",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": false,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "dependency_tag",
@@ -148,6 +55,53 @@
         },
         {
           "type": "location_tag",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "empty_line",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "ignored_line",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "prio",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "source_file",
+    "named": true,
+    "root": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "comment",
+          "named": true
+        },
+        {
+          "type": "empty_line",
+          "named": true
+        },
+        {
+          "type": "ignored_line",
+          "named": true
+        },
+        {
+          "type": "task",
+          "named": true
+        },
+        {
+          "type": "version",
           "named": true
         }
       ]
@@ -189,15 +143,16 @@
     }
   },
   {
-    "type": " ",
+    "type": "version",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "\n",
     "named": false
   },
   {
-    "type": "\"",
-    "named": false
-  },
-  {
-    "type": "#",
+    "type": "\r\n",
     "named": false
   },
   {
@@ -213,43 +168,11 @@
     "named": false
   },
   {
-    "type": "+",
-    "named": false
-  },
-  {
     "type": "-",
     "named": false
   },
   {
-    "type": "/",
-    "named": false
-  },
-  {
     "type": ":",
-    "named": false
-  },
-  {
-    "type": "=",
-    "named": false
-  },
-  {
-    "type": "@",
-    "named": false
-  },
-  {
-    "type": "B",
-    "named": false
-  },
-  {
-    "type": "C",
-    "named": false
-  },
-  {
-    "type": "D",
-    "named": false
-  },
-  {
-    "type": "X",
     "named": false
   },
   {
@@ -261,18 +184,6 @@
     "named": false
   },
   {
-    "type": "b",
-    "named": false
-  },
-  {
-    "type": "c",
-    "named": false
-  },
-  {
-    "type": "d",
-    "named": false
-  },
-  {
     "type": "date",
     "named": true
   },
@@ -281,23 +192,31 @@
     "named": true
   },
   {
-    "type": "dep",
-    "named": false
+    "type": "dependency_tag",
+    "named": true
   },
   {
-    "type": "text",
+    "type": "generic_tag",
+    "named": true
+  },
+  {
+    "type": "kind_tag",
+    "named": true
+  },
+  {
+    "type": "kv_tag",
+    "named": true
+  },
+  {
+    "type": "location_tag",
+    "named": true
+  },
+  {
+    "type": "stat",
     "named": true
   },
   {
     "type": "title",
     "named": true
-  },
-  {
-    "type": "version",
-    "named": true
-  },
-  {
-    "type": "x",
-    "named": false
   }
 ]
