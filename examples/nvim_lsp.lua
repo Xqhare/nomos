@@ -13,9 +13,7 @@ return {
 			configs.nomos_lsp = {
 				default_config = {
 					cmd = { "nomos-lsp" },
-					filetypes = { "markdown" },
-					-- Attach only when these markers are found in the workspace
-					root_dir = lspconfig.util.root_pattern("nomos.json", ".git", "README.md"),
+					filetypes = { "nomos" },
 					settings = {},
 				},
 			}
