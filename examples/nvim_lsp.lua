@@ -62,5 +62,14 @@ return {
 		vim.treesitter.language.add('nomos', {
 			path = vim.fn.stdpath("data") .. '/site/parser/nomos.so'
 		})
+
+		-- 5. Auto-start tree-sitter when opening a nomos file
+		vim.api.nvim_create_autocmd({ "FileType" }, {
+			group = vim.api.nvim_create_augroup('NomosTreeSitter', { clear = true }),
+			pattern = "nomos",
+			callback = function()
+				vim.treesitter.start()
+			end,
+		})
 	end
 }
