@@ -1,7 +1,7 @@
 ; --- Basic Task Structure ---
 
-; Match the literal hyphen
-(task "-" @punctuation.special)
+; Match the task marker prefix (e.g., - [)
+(task_marker) @punctuation.special
 
 ; Match the status block (e.g., [x])
 (stat) @type
