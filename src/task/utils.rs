@@ -134,7 +134,8 @@ pub fn make_line<'line>(
                     "Line {line_number} in file {file_path:?} is too short to be a task"
                 ))),
             )
-            .add_ctx(format!("Got line: {line}")));
+            .add_ctx(format!("Got line: {line}"))
+            .add_ctx(format!("Line: {line_number} in file: {file_path:?}")));
         }
         Ok(line)
     } else {

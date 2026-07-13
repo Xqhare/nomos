@@ -390,6 +390,23 @@ mod tests {
     }
 
     #[test]
+    fn test_diagnostics_too_short_line_number() {
+        let content = "- [ ] Task 1 :: \n\n- [ ]\n";
+        let diag_val = get_diagnostics("file:///tmp/test.md", content);
+        let obj = diag_val.as_object().unwrap();
+        let diags = obj.get("diagnostics").unwrap().as_array().unwrap();
+        assert_eq!(diags.len(), 1);
+        let diag = diags[0].as_object().unwrap();
+        let range = diag.get("range").unwrap().as_object().unwrap();
+        let start = range.get("start").unwrap().as_object().unwrap();
+
+        let line_val = start.get("line");
+        let line_num_opt = line_val.unwrap().as_number();
+        let line_isize = line_num_opt.unwrap().into_isize();
+        assert_eq!(line_isize.unwrap(), 2); // 0-indexed line 3 (which is "- [ ]")
+    }
+
+    #[test]
     fn test_completions_and_hover() {
         // Create a temporary task file and config file to load Nomos
         let temp_dir = env::temp_dir().join(format!("nomos_test_workspace_{}", std::process::id()));
