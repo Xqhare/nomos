@@ -1,0 +1,41 @@
+{
+  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/config.schema.json",
+  "grammars": [
+    {
+      "name": "nomos",
+      "camelcase": "Nomos",
+      "title": "Nomos",
+      "scope": "source.nomos",
+      "file-types": [
+        "nomos"
+      ],
+      "injection-regex": "^nomos$",
+      "class-name": "TreeSitterNomos"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "license": "MIT",
+    "description": "A task management protocol",
+    "authors": [
+      {
+        "name": "Xqhare",
+        "url": ""
+      }
+    ],
+    "links": {
+      "repository": "https://github.com/Xqhare/nomos",
+      "funding": ""
+    }
+  },
+  "bindings": {
+    "c": true,
+    "go": true,
+    "java": false,
+    "node": true,
+    "python": true,
+    "rust": true,
+    "swift": true,
+    "zig": false
+  }
+}

@@ -15,3 +15,54 @@ Cargo.lock
 # Added by cargo
 
 /target
+
+# for treesitter
+
+# Rust artifacts
+tree-sitter/target/
+
+# Node artifacts
+tree-sitter/build/
+tree-sitter/prebuilds/
+tree-sitter/node_modules/
+
+# Swift artifacts
+tree-sitter/.build/
+
+# Go artifacts
+tree-sitter/_obj/
+
+# Python artifacts
+tree-sitter/.venv/
+tree-sitter/dist/
+tree-sitter/*.egg-info
+tree-sitter/*.whl
+
+# C artifacts
+tree-sitter/*.a
+tree-sitter/*.so
+tree-sitter/*.so.*
+tree-sitter/*.dylib
+tree-sitter/*.dll
+tree-sitter/*.pc
+tree-sitter/*.exp
+tree-sitter/*.lib
+
+# Zig artifacts
+tree-sitter/.zig-cache/
+tree-sitter/zig-cache/
+tree-sitter/zig-out/
+
+# Example dirs
+tree-sitter/examples/*/
+
+# Grammar volatiles
+tree-sitter/*.wasm
+tree-sitter/*.obj
+tree-sitter/*.o
+
+# Archives
+tree-sitter/*.tar.gz
+tree-sitter/*.tgz
+tree-sitter/*.zip
+tree-sitter/*.jar

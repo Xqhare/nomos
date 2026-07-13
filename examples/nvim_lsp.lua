@@ -54,5 +54,13 @@ return {
 				end,
 			}
 		})
+
+		-- 4. Set up treesitter if desired
+		-- Requires the `tree-sitter` package to be installed
+		-- Put the `nomos.so` file in your `~/.local/share/nvim/site/parser/` directory
+		-- Also put the `highlights.scm` file in the `~/.config/nvim/queries/nomos/` directory
+		vim.treesitter.language.add('nomos', {
+			path = vim.fn.stdpath("data") .. '/site/parser/nomos.so'
+		})
 	end
 }

@@ -5,8 +5,11 @@
   "license": "MIT",
   "author": "Xqhare",
   "type": "commonjs",
-  "main": "index.js",
+  "main": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.26.11"
   }
 }
