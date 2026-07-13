@@ -126,8 +126,8 @@ pub fn make_line<'line>(
     line_number: u32,
 ) -> NomosResult<&'line str> {
     if let Some(line) = line.strip_prefix("- ") {
-        // Smalles task: "- [ ] a :: ". Strip prefix => "[ ] a :: " = 9 chars.
-        if line.len() < 9 {
+        // Smallest task: "- [ ] a". Strip prefix => "[ ] a" = 5 chars.
+        if line.len() < 5 {
             return Err(NemesisError::new(
                 "nomos::parser::task::new_from_line",
                 NomosError::Parser(Parser::Task(format!(

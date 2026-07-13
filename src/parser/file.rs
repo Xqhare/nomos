@@ -220,4 +220,14 @@ This is a standard markdown file description.
         assert_eq!(t.title, "Comment Task");
         assert_eq!(t.file_data.line, 2);
     }
+
+    #[test]
+    fn test_short_task_without_delimiter() {
+        let content = "- [ ] a\n";
+        let path = Path::new("test_short.nomos");
+        let tasks = parse_string(content, path, Some("proj".to_string())).unwrap();
+        let mut iter = tasks.iter();
+        let t = iter.next().unwrap();
+        assert_eq!(t.title, "a");
+    }
 }
