@@ -11,6 +11,7 @@ use crate::{
     error::{NomosError, NomosResult},
     parser::parse_file,
     task::{Task, Tasks},
+    utils::TaskStatus,
 };
 
 /// Expects `paths_to_crawl` to be `Vec<(project_name, Vec<PathBuf>)>`
@@ -154,6 +155,9 @@ pub fn sort_tasks(all_project_tasks: BTreeMap<String, Tasks>) -> NomosResult<Tas
     let mut sorted_tasks: Vec<Task> = Vec::with_capacity(sorted.len());
     for task_name in sorted {
         if let Some(task) = flat_tasks.get(task_name) {
+            if task.parents_amount > 0 && (task.status == TaskStatus::Done || task.status == TaskStatus::Cut) {
+                continue;
+            }
             sorted_tasks.push(task.clone());
         }
     }
@@ -496,5 +500,107 @@ mod tests {
         assert_eq!(sorted_list[0].parent_titles, vec!["Parent P".to_string()]);
         assert_eq!(sorted_list[1].title, "Parent P");
         assert!(sorted_list[1].parent_titles.is_empty());
+    }
+
+    #[test]
+    fn test_subtask_filtering_done_and_cut() {
+        let mut tasks = Tasks::new();
+        
+        let subtask_a = Task {
+            parents_amount: 1,
+            status: TaskStatus::Done,
+            priority: None,
+            title: "Subtask A".to_string(),
+            inception_date: None,
+            completion_date: None,
+            tags: crate::tags::Tags::new(),
+            dependencies: Dependencies::new(),
+            description: None,
+            notes: None,
+            sub_tasks: None,
+            file_data: FileData {
+                line: 2,
+                path: PathBuf::from("test.nomos"),
+            },
+            project: "proj".to_string(),
+            parent_titles: Vec::new(),
+        };
+
+        let subtask_b = Task {
+            parents_amount: 1,
+            status: TaskStatus::Cut,
+            priority: None,
+            title: "Subtask B".to_string(),
+            inception_date: None,
+            completion_date: None,
+            tags: crate::tags::Tags::new(),
+            dependencies: Dependencies::new(),
+            description: None,
+            notes: None,
+            sub_tasks: None,
+            file_data: FileData {
+                line: 3,
+                path: PathBuf::from("test.nomos"),
+            },
+            project: "proj".to_string(),
+            parent_titles: Vec::new(),
+        };
+
+        let subtask_c = Task {
+            parents_amount: 1,
+            status: TaskStatus::Open,
+            priority: None,
+            title: "Subtask C".to_string(),
+            inception_date: None,
+            completion_date: None,
+            tags: crate::tags::Tags::new(),
+            dependencies: Dependencies::new(),
+            description: None,
+            notes: None,
+            sub_tasks: None,
+            file_data: FileData {
+                line: 4,
+                path: PathBuf::from("test.nomos"),
+            },
+            project: "proj".to_string(),
+            parent_titles: Vec::new(),
+        };
+
+        let mut subtasks = Tasks::new();
+        subtasks.push(subtask_a);
+        subtasks.push(subtask_b);
+        subtasks.push(subtask_c);
+
+        tasks.push(Task {
+            parents_amount: 0,
+            status: TaskStatus::Open,
+            priority: None,
+            title: "Parent P".to_string(),
+            inception_date: None,
+            completion_date: None,
+            tags: crate::tags::Tags::new(),
+            dependencies: Dependencies::new(),
+            description: None,
+            notes: None,
+            sub_tasks: Some(subtasks),
+            file_data: FileData {
+                line: 1,
+                path: PathBuf::from("test.nomos"),
+            },
+            project: "proj".to_string(),
+            parent_titles: Vec::new(),
+        });
+
+        let mut all_project_tasks = BTreeMap::new();
+        all_project_tasks.insert("proj".to_string(), tasks);
+
+        let sorted = sort_tasks(all_project_tasks).unwrap();
+        let sorted_list: Vec<&Task> = sorted.iter().collect();
+
+        // Subtask A and B (Done and Cut) should be filtered out.
+        // Subtask C (Open) and Parent P (Open) should remain.
+        assert_eq!(sorted_list.len(), 2);
+        assert_eq!(sorted_list[0].title, "Subtask C");
+        assert_eq!(sorted_list[1].title, "Parent P");
     }
 }
