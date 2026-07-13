@@ -120,6 +120,10 @@ impl Display for Task {
                 write!(f, " Completion date: {completion_date}")?;
             }
             write!(f, "\n")?;
+            if !self.parent_titles.is_empty() {
+                write!(f, "{}", padding(self.parents_amount.wrapping_mul(4)))?;
+                write!(f, "Child of: {}\n", self.parent_titles.join(" > "))?;
+            }
             write!(f, "{}", padding(self.parents_amount.wrapping_mul(4)))?;
             write!(f, "{}", self.title)?;
             if let Some(description) = &self.description
