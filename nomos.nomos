@@ -21,12 +21,16 @@
     - [x] kind tags :: `+tag` behaves weird. typing in `+` only shows one tag, `Game` (wherever that one comes from) and nothing else. +Bug    
     - [x] location tags :: `@tag` behaves weird. typing in `@` only shows: `@README.md`, `@xqhare.net` and `@randomiserProject`.    
     - [x] KV tags :: key=value tags also dont work; entering `key=` doesnt even open the popup    
-    - [ ] Improve file detection :: Nomos LSP is running on every Markdown file
+    - [x] Improve file detection :: Nomos LSP is running on every Markdown file
         * Thankfully only the first error is displayed
-        - [ ] Autocomplete :: seems to pull from all Markdown files of the project?
+        - [x] Autocomplete :: seems to pull from all Markdown files of the project?
 	    * Or it doesnt? where does the autocomplete for `f` come from? `-f=` and -f=                
 	    * That smells like the nomos -h help page; but that is inside .rs files??    
-	    - [ ] Only the very first error of the file is displayed :: +Bug
+    - [ ] Only the very first error of the file is displayed :: +Bug
+	* The parser returns after the first error; There must be a way of getting the rest of the errors. But how?
+	- [ ] error message is sometimes on the first line :: +Bug
+	    * Specifically the `Line X in file Y is too short to be a task`
+	    * The message contains the correct line number.
 - [x] Help page :: 
     - [x] Update help page :: @nomos/help.rs with better about section. Usage is only partialy right and needs more formatting work in general.
 	* Global Config and its fields        

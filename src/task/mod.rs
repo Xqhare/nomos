@@ -176,7 +176,10 @@ impl Display for Task {
             write!(f, "{}", self.title)?;
             let has_metadata = self.inception_date.is_some()
                 || self.completion_date.is_some()
-                || self.description.as_deref().map_or(false, |d| !d.trim().is_empty())
+                || self
+                    .description
+                    .as_deref()
+                    .map_or(false, |d| !d.trim().is_empty())
                 || self.notes.is_some()
                 || self.sub_tasks.is_some();
             if has_metadata {
@@ -242,7 +245,7 @@ impl Task {
         project: Option<String>,
     ) -> NomosResult<Task> {
         let parent_line = *line_number;
-        // Strip prefix ("- ") and validate minimum length of 9
+        // Strip prefix ("- ") and validate minimum length of 5
         let mut line = make_line(line, file_path, *line_number)?;
         let status = make_status(line, file_path, *line_number)?;
         line = &line[3..].trim_start(); // Strip status
@@ -333,4 +336,21 @@ impl Task {
         validate_task(&task)?;
         Ok(task)
     }
+}
+
+#[test]
+fn shortest_task() {
+    let line = "- [ ] a";
+    let task = Task::new_from_line(
+        line,
+        Path::new(""),
+        &mut 0,
+        &mut "".lines().peekable(),
+        0,
+        Some("project".to_string()),
+    );
+    assert!(task.is_ok());
+    let task = task.unwrap();
+    assert_eq!(task.title, "a");
+    assert_eq!(task.status, TaskStatus::Open);
 }

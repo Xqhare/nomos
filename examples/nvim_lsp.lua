@@ -5,6 +5,12 @@ return {
 		"williamboman/mason-lspconfig.nvim",
 	},
 	config = function()
+		-- 0. Teach Neovim about the .nomos file extension
+		vim.filetype.add({
+			extension = {
+				nomos = "nomos", -- Maps the .nomos extension to the "nomos" filetype
+			},
+		})
 		local lspconfig = require("lspconfig")
 		local configs = require("lspconfig.configs")
 
@@ -14,6 +20,10 @@ return {
 				default_config = {
 					cmd = { "nomos-lsp" },
 					filetypes = { "nomos" },
+					-- Finds the root dir of the project. `.` functions as a kind of fallback to use the parent dir of a opened file
+					-- `root_pattern` matches from left to right, with the right most matching pattern being used
+					root_dir = lspconfig.util.root_pattern("nomos.json", ".git", "README.md",
+						"nomos.nomos", "."),
 					settings = {},
 				},
 			}
