@@ -2,7 +2,7 @@
     - [ ] Doc updates :: 
         - [ ] Ensure generic tag is documented :: 
             * #tags are tags too, but missing from the help page for example        
-	    - [ ] standard markers :: Only dirs with standard project markers are considered as projects @nomos/utils.rs        
+	- [ ] standard markers :: Only dirs with standard project markers are considered as projects @nomos/utils.rs        
 	- [x] -h flag :: rework / expand help output   
 	- [x] (1) Especially Readme
 - [ ] Write tests
@@ -14,9 +14,9 @@
 - [x] (1) Update priority sorting :: Tasks with no priority should be in the middle (not at the end)
 	* `M` or `N` could be used
 	* This way its easier to sort my tasks +Task* Configurable via the global config file and overruled by the project config file
-- [ ] (3) Nvim integration :: 
+- [x] (3) Nvim integration :: 
     - [x] Create a LSP server for nomos    
-    - [ ] Code Highlighting :: A nvim plugin would be nice to make the files look nicer (and easier to read at a glance)
+    - [x] Code Highlighting :: A nvim plugin would be nice to make the files look nicer (and easier to read at a glance)
 - [ ] Improve LSP server :: 
     * Dependencies work as intended
     - [x] kind tags :: `+tag` behaves weird. typing in `+` only shows one tag, `Game` (wherever that one comes from) and nothing else. +Bug    
@@ -27,7 +27,7 @@
         - [x] Autocomplete :: seems to pull from all Markdown files of the project?
 	    * Or it doesnt? where does the autocomplete for `f` come from? `-f=` and -f=                
 	    * That smells like the nomos -h help page; but that is inside .rs files??    
-    - [ ] Only the very first error of the file is displayed :: +Bug
+    - [ ] (4) Only the very first error of the file is displayed :: +Bug
 	* The parser returns after the first error; There must be a way of getting the rest of the errors. But how?
 	- [x] error message is sometimes on the first line :: +Bug
 	    * Specifically the `Line X in file Y is too short to be a task`
@@ -45,6 +45,3 @@
 - [ ] (1) Move code :: @nomos/utils.rs can be moved out into the std lib when dep=software_ideas:"create my own std library in rust"
 - [x] (1) Sub task dependencies are ignored :: 
     * Easy fix: push each sub task into the flattened kahn list depending on the parent. rest should work as is.
-- [ ] test task :: 2026-07-14 why is date white?
-    * Inspect returns 'no items found' for some reason
-- [x] test task done :: 2026-07-13 2026-07-14 both dates are white

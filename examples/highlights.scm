@@ -17,7 +17,7 @@
 (delimiter) @markup.heading
 
 ; Match dates (e.g., 2026-07-12)
-(date) @string.special
+(date) @boolean
 
 ; --- Notes / Comments ---
 

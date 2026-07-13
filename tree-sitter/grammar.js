@@ -38,7 +38,7 @@ module.exports = grammar({
 			optional($._eol)
 		),
 
-		task_marker: $ => token(prec(1, seq('-', /[ \t]*/, '['))),
+		task_marker: $ => token(prec(1, seq('-', /[ \t]*/))),
 
 		comment: $ => seq(
 			$.comment_marker,
@@ -50,7 +50,7 @@ module.exports = grammar({
 
 		delimiter: $ => '::',
 
-		stat: $ => seq($.stat_char, ']'),
+		stat: $ => seq('[', $.stat_char, ']'),
 
 		stat_char: $ => choice(
 			'b',

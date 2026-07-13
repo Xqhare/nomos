@@ -148,10 +148,6 @@
             {
               "type": "PATTERN",
               "value": "[ \\t]*"
-            },
-            {
-              "type": "STRING",
-              "value": "["
             }
           ]
         }
@@ -217,6 +213,10 @@
     "stat": {
       "type": "SEQ",
       "members": [
+        {
+          "type": "STRING",
+          "value": "["
+        },
         {
           "type": "SYMBOL",
           "name": "stat_char"
