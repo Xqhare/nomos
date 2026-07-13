@@ -401,6 +401,7 @@ mod tests {
                 path: PathBuf::from("mawu.md"),
             },
             project: "mawu".to_string(),
+            parent_titles: Vec::new(),
         });
 
         let mut tasks_thoth = Tasks::new();
@@ -421,6 +422,7 @@ mod tests {
                 path: PathBuf::from("thoth.md"),
             },
             project: "thoth".to_string(),
+            parent_titles: Vec::new(),
         });
 
         let mut all_project_tasks = BTreeMap::new();
@@ -459,6 +461,7 @@ mod tests {
                 path: PathBuf::from("test.nomos"),
             },
             project: "proj".to_string(),
+            parent_titles: Vec::new(),
         });
         tasks.push(Task {
             parents_amount: 0,
@@ -477,6 +480,7 @@ mod tests {
                 path: PathBuf::from("test.nomos"),
             },
             project: "proj".to_string(),
+            parent_titles: Vec::new(),
         });
 
         let mut all_project_tasks = BTreeMap::new();

@@ -88,6 +88,8 @@ pub struct Task {
     pub file_data: FileData,
     /// Project name
     pub project: String,
+    /// Parent titles for tasks that are sub-tasks
+    pub parent_titles: Vec<String>,
 }
 
 /// Display implementation
@@ -322,6 +324,7 @@ impl Task {
             file_data,
             project: project.expect("Validated above"),
             parents_amount,
+            parent_titles: Vec::new(),
         };
         validate_task(&task)?;
         Ok(task)
