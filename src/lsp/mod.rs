@@ -41,6 +41,7 @@ pub struct LspServer {
     nomos: Option<Nomos>,
     shutdown: bool,
     buffers: HashMap<String, String>,
+    last_error_file: Option<String>,
 }
 
 impl LspServer {
@@ -50,6 +51,7 @@ impl LspServer {
             nomos: None,
             shutdown: false,
             buffers: HashMap::new(),
+            last_error_file: None,
         }
     }
 
@@ -256,10 +258,44 @@ impl LspServer {
                 }
             }
             "textDocument/didSave" => {
+                // Clear the previous workspace diagnostic if last_error_file is Some
+                if let Some(ref prev_file) = self.last_error_file {
+                    let prev_uri = if prev_file.starts_with("file://") {
+                        prev_file.clone()
+                    } else {
+                        format!("file://{}", prev_file)
+                    };
+                    let mut result = Object::new();
+                    result.insert("uri", XffValue::from(prev_uri));
+                    result.insert("diagnostics", XffValue::from(Vec::<XffValue>::new()));
+                    
+                    let clear_notif = Notification {
+                        method: "textDocument/publishDiagnostics".to_string(),
+                        params: Some(XffValue::from(result)),
+                    };
+                    writer.write_frame(&clear_notif.to_xff())?;
+                }
+                self.last_error_file = None;
+
                 // Refresh global workspace state
                 let config_path = find_global_config();
                 if let Some(path) = config_path {
-                    self.nomos = Nomos::new(path).ok();
+                    match Nomos::new(path) {
+                        Ok(nomos) => {
+                            self.nomos = Some(nomos);
+                        }
+                        Err(err) => {
+                            self.nomos = None;
+                            if let Some((file, diag)) = capabilities::parse_workspace_error_to_diagnostic(&err) {
+                                self.last_error_file = Some(file);
+                                let diag_notif = Notification {
+                                    method: "textDocument/publishDiagnostics".to_string(),
+                                    params: Some(diag),
+                                };
+                                writer.write_frame(&diag_notif.to_xff())?;
+                            }
+                        }
+                    }
                 }
             }
             _ => {}

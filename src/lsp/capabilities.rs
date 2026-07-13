@@ -627,7 +627,75 @@ mod tests {
         assert!(labels.contains(&"important"));
         assert!(labels.contains(&"todo"));
         assert!(labels.contains(&"refactor"));
-
         let _ = fs::remove_dir_all(&temp_dir);
     }
 }
+
+/// Parse a NemesisError context stack to extract workspace diagnostics
+pub fn parse_workspace_error_to_diagnostic(err: &nemesis::NemesisError) -> Option<(String, XffValue)> {
+    let mut file_path = None;
+    let mut line_num = 0;
+    for ctx in err.contexts() {
+        if ctx.starts_with("Line: ") {
+            if let Some(pos) = ctx.find(" in file:") {
+                if let Ok(l) = ctx[6..pos].parse::<u32>() {
+                    line_num = l.saturating_sub(1);
+                }
+                let path_part = ctx[pos + 9..].trim().trim_matches('"');
+                file_path = Some(path_part.to_string());
+            }
+        }
+    }
+
+    let file = file_path?;
+    let mut diagnostics = Vec::new();
+    let mut diag = Object::new();
+    let mut range = Object::new();
+    let mut start = Object::new();
+    start.insert("line", XffValue::from(line_num as i64));
+    start.insert("character", XffValue::from(0));
+    let mut end = Object::new();
+    end.insert("line", XffValue::from(line_num as i64));
+    end.insert("character", XffValue::from(200));
+
+    range.insert("start", XffValue::from(start));
+    range.insert("end", XffValue::from(end));
+
+    diag.insert("range", XffValue::from(range));
+    diag.insert("severity", XffValue::from(1)); // Error
+    diag.insert("message", XffValue::from(format!("{}", err.leaf_error())));
+    diag.insert("source", XffValue::from("nomos-lsp".to_string()));
+    diagnostics.push(XffValue::from(diag));
+
+    let mut result = Object::new();
+    let file_uri = if file.starts_with("file://") {
+        file.clone()
+    } else {
+        format!("file://{}", file)
+    };
+    result.insert("uri", XffValue::from(file_uri));
+    result.insert("diagnostics", XffValue::from(diagnostics));
+    Some((file, XffValue::from(result)))
+}
+
+#[cfg(test)]
+mod tests_workspace_diag {
+    use super::*;
+
+    #[test]
+    fn test_parse_workspace_error() {
+        let err = nemesis::NemesisError::new(
+            "test",
+            std::io::Error::new(std::io::ErrorKind::Other, "test error")
+        )
+        .add_ctx("Line: 10 in file: \"/home/xqhare/tasks.nomos\"");
+
+        let parsed = parse_workspace_error_to_diagnostic(&err);
+        assert!(parsed.is_some());
+        let (file, val) = parsed.unwrap();
+        assert_eq!(file, "/home/xqhare/tasks.nomos");
+        let obj = val.as_object().unwrap();
+        assert_eq!(obj.get("uri").unwrap().as_string().unwrap(), "file:///home/xqhare/tasks.nomos");
+    }
+}
+
