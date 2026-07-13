@@ -1,5 +1,7 @@
-use std::{collections::{BTreeMap, HashMap}, path::PathBuf};
-
+use std::{
+    collections::{BTreeMap, HashMap},
+    path::PathBuf,
+};
 
 use athena::{Array, sorting::kahns_weighted};
 use mawu::{XffValue, read::json};
@@ -50,9 +52,19 @@ fn collect_recursive(
         let mut child_ids = Vec::new();
         for sub_task in sub_tasks.iter() {
             parent_titles.push(task.title.clone());
-            let sub_id = format!("{project_name}:{}:{}", parent_titles.join(":"), sub_task.title);
+            let sub_id = format!(
+                "{project_name}:{}:{}",
+                parent_titles.join(":"),
+                sub_task.title
+            );
             child_ids.push(sub_id);
-            collect_recursive(sub_task, project_name, parent_titles, flat_tasks, child_ids_map);
+            collect_recursive(
+                sub_task,
+                project_name,
+                parent_titles,
+                flat_tasks,
+                child_ids_map,
+            );
             parent_titles.pop();
         }
         child_ids_map.insert(current_id, child_ids);
@@ -145,7 +157,6 @@ pub fn sort_tasks(all_project_tasks: BTreeMap<String, Tasks>) -> NomosResult<Tas
     }
     Ok(sorted_tasks.into())
 }
-
 
 /// Expects `config` to be `XffValue::Object`
 pub fn make_paths_to_crawl(config: &XffValue) -> NomosResult<Vec<(String, Vec<PathBuf>)>> {
@@ -280,7 +291,7 @@ fn make_project_paths(
         // TODO: add to doc: Only dirs with a standard project marker are considered
         if base_path.join(".git").exists() || base_path.join("README.md").exists() {
             for file in ["nomos", "todo", "tasks", "roadmap"] {
-                for extension in ["txt", "md"] {
+                for extension in ["nomos"] {
                     let path = PathBuf::from(base_path.join(format!("{file}.{extension}")));
                     match base_path.read_dir() {
                         Err(err) => {
@@ -443,7 +454,10 @@ mod tests {
             description: None,
             notes: None,
             sub_tasks: None,
-            file_data: FileData { line: 2, path: PathBuf::from("test.nomos") },
+            file_data: FileData {
+                line: 2,
+                path: PathBuf::from("test.nomos"),
+            },
             project: "proj".to_string(),
         });
         tasks.push(Task {
@@ -458,7 +472,10 @@ mod tests {
             description: None,
             notes: None,
             sub_tasks: Some(subtasks),
-            file_data: FileData { line: 1, path: PathBuf::from("test.nomos") },
+            file_data: FileData {
+                line: 1,
+                path: PathBuf::from("test.nomos"),
+            },
             project: "proj".to_string(),
         });
 

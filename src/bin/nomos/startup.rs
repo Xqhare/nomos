@@ -91,6 +91,8 @@ fn make_default_config() -> XffValue {
         XffValue::from(vec![XffValue::from("complete/path/to/dir")]),
     );
     obj.insert("files", XffValue::from(files_obj));
+    obj.insert("version", XffValue::from(1));
+    obj.insert("default_prio_level", XffValue::from(5));
     obj.into()
 }
 
