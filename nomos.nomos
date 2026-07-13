@@ -3,16 +3,17 @@
         - [ ] Ensure generic tag is documented :: 
             * #tags are tags too, but missing from the help page for example        
 	    - [ ] standard markers :: Only dirs with standard project markers are considered as projects @nomos/utils.rs        
-	    - [x] -h flag :: rework / expand help output   
-	    - [x] (1) Especially Readme
+	- [x] -h flag :: rework / expand help output   
+	- [x] (1) Especially Readme
 - [ ] Write tests
 - [ ] Subcommands :: 
     - [C] Add TUI subcommand :: @bin/nomos/cli dep=talos:"State rework"
         * At a later stage, a lot of work -> Looking at ananke, a large part could be reused, or at least copied and modified    
-	- [ ] Refactor subcommand executions :: They share a lot of common code. @bin/nomos/cli
+    - [ ] Refactor subcommand executions :: They share a lot of common code. @bin/nomos/cli
 - [ ] Sort done last :: Done tasks should always be at the end
-- [ ] (1) Update priority sorting :: Tasks with no priority should be in the middle (not at the end)
-	* `M` or `N` could be used* This way its easier to sort my tasks +Task* Configurable via the global config file and overruled by the project config file
+- [x] (1) Update priority sorting :: Tasks with no priority should be in the middle (not at the end)
+	* `M` or `N` could be used
+	* This way its easier to sort my tasks +Task* Configurable via the global config file and overruled by the project config file
 - [ ] (3) Nvim integration :: 
     - [x] Create a LSP server for nomos    
     - [ ] Code Highlighting :: A nvim plugin would be nice to make the files look nicer (and easier to read at a glance)
@@ -28,7 +29,7 @@
 	    * That smells like the nomos -h help page; but that is inside .rs files??    
     - [ ] Only the very first error of the file is displayed :: +Bug
 	* The parser returns after the first error; There must be a way of getting the rest of the errors. But how?
-	- [ ] error message is sometimes on the first line :: +Bug
+	- [x] error message is sometimes on the first line :: +Bug
 	    * Specifically the `Line X in file Y is too short to be a task`
 	    * The message contains the correct line number.
 - [x] Help page :: 
@@ -44,4 +45,3 @@
 - [ ] (1) Move code :: @nomos/utils.rs can be moved out into the std lib when dep=software_ideas:"create my own std library in rust"
 - [x] (1) Sub task dependencies are ignored :: 
     * Easy fix: push each sub task into the flattened kahn list depending on the parent. rest should work as is.
-- [ ] s
