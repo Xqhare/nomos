@@ -46,7 +46,9 @@ fn collect_recursive(
         format!("{project_name}:{}:{}", parent_titles.join(":"), task.title)
     };
 
-    flat_tasks.insert(current_id.clone(), task.clone());
+    let mut cloned_task = task.clone();
+    cloned_task.parent_titles = parent_titles.clone();
+    flat_tasks.insert(current_id.clone(), cloned_task);
 
     if let Some(sub_tasks) = &task.sub_tasks {
         let mut child_ids = Vec::new();
@@ -491,6 +493,8 @@ mod tests {
 
         // Subtask A must sort before Parent P because the parent depends on the subtask
         assert_eq!(sorted_list[0].title, "Subtask A");
+        assert_eq!(sorted_list[0].parent_titles, vec!["Parent P".to_string()]);
         assert_eq!(sorted_list[1].title, "Parent P");
+        assert!(sorted_list[1].parent_titles.is_empty());
     }
 }
