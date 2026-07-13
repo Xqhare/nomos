@@ -38,8 +38,9 @@ pub fn get_diagnostics(uri: &str, content: &str) -> XffValue {
     // To be fast and accurate to the unsaved buffer, we can write the content to a temp file first.
     static DIAG_COUNTER: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
     let counter = DIAG_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("nomos");
     let temp_path =
-        std::env::temp_dir().join(format!("nomos_diag_{}_{}.md", std::process::id(), counter));
+        std::env::temp_dir().join(format!("nomos_diag_{}_{}.{}", std::process::id(), counter, extension));
     if std::fs::write(&temp_path, content).is_ok() {
         if let Err(err) = parse_file(&temp_path, project) {
             // Extract line number
@@ -561,5 +562,14 @@ mod tests {
         assert!(val_labels.contains(&"3d"));
 
         let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn test_diagnostics_preserves_extension() {
+        let content = "- [ ] Optional Delimiter task\n";
+        let diag_val = get_diagnostics("file:///tmp/test.nomos", content);
+        let obj = diag_val.as_object().unwrap();
+        let diags = obj.get("diagnostics").unwrap().as_array().unwrap();
+        assert!(diags.is_empty(), "Expected no diagnostics, but got: {:?}", diags);
     }
 }
