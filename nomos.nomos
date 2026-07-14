@@ -1,8 +1,8 @@
-- [ ] (1) Write doc :: 
-    - [ ] Doc updates :: 
-        - [ ] Ensure generic tag is documented :: 
+- [x] (1) Write doc :: 
+    - [x] Doc updates :: 
+        - [x] Ensure generic tag is documented :: 
             * #tags are tags too, but missing from the help page for example        
-	- [ ] standard markers :: Only dirs with standard project markers are considered as projects @nomos/utils.rs        
+	- [x] standard markers :: Only dirs with standard project markers are considered as projects @nomos/utils.rs        
 	- [x] -h flag :: rework / expand help output   
 	- [x] (1) Especially Readme
 - [ ] Write tests
@@ -32,6 +32,9 @@
 	- [x] error message is sometimes on the first line :: +Bug
 	    * Specifically the `Line X in file Y is too short to be a task`
 	    * The message contains the correct line number.
+    - [ ] (1) Autocomplete :: +Bug When hitting enter on a dependency autocomplete for the task title only; Some of the title is missing and the following line deleted.
+	* All other tags (including kv) work as expected
+	* I suspect double quotes are not handled correctly or something like that
 - [x] Help page :: 
     - [x] Update help page :: @nomos/help.rs with better about section. Usage is only partialy right and needs more formatting work in general.
 	* Global Config and its fields        
