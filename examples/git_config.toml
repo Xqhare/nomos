@@ -2,6 +2,6 @@
 # to validate changes to nomos files, commit the changes and push.
 
 [alias]
-nomos = "!nomos validate && git cta \"update nomos\" && git ps"
+nomos = "!nomos validate && git cta \"doc(nomos): update task tracking\" && git ps"
 ps = push
 cta = commit -am
