@@ -13,7 +13,7 @@ You can learn more about that [here](https://blog.xqhare.net/posts/why_solve_pro
 
 `Nomos` uses my [nomos](https://github.com/xqhare/nomos) project management system.
 
-The roadmap for this project can be found in the [nomos.md](nomos.md) file.
+The roadmap for this project can be found in the [nomos.nomos](nomos.nomos) file.
 
 All nomos files follow the syntax defined [here](https://github.com/Xqhare/nomos/blob/master/spec/).
 
@@ -37,6 +37,20 @@ Nomos was a lesser Greek deity of laws, statutes, and ordinances.
 
 Nomos is available to be used both as a command line tool and as a Rust library.
 It also provides an LSP server as well as tree-sitter grammar and syntax highlighting for Neovim.
+
+### AI Agent Skill
+
+The AI agent skill for Nomos is a work in progress.
+
+It is currently available in the [xqhare/skills](https://github.com/Xqhare/skills) repository, split into a [CLI](https://github.com/Xqhare/skills/tree/master/nomos-cli) and [general](https://github.com/Xqhare/skills/tree/master/nomos) version.
+
+> [!important]
+> The `general` skill expects a git alias `git nomos` to be available.
+> You can copy it from [here](https://github.com/xqhare/nomos/blob/master/examples/git_config.toml) and paste it into your `~/.gitconfig`.
+
+> [!important]
+> The `CLI` version expects the `nomos` program to be available in your PATH. (like `~/.local/bin/` or `~/.cargo/bin/`).
+> See the [Command Line Tool](#command-line-tool) section for more information.
 
 ### Neovim Integration
 
@@ -64,7 +78,9 @@ You can find an example nvim configuration [here](https://github.com/Xqhare/nomo
 Clone the repository and run `cargo install --path .`
 
 On first execution, Nomos creates a `config.json` file inside `~/.config/nomos` (or `~/.nomos` as a fallback).
+
 To get started:
+
 1. Run `nomos` by itself to initialize the config file.
 2. Update the `search_bases` key in `config.json` with the paths pointing to root directories containing the projects you want to track.
 3. You can also optionally update the `files` key with `"project_name": "path/to/specific/file.nomos"` if you want to track individual files directly.
@@ -84,6 +100,7 @@ An example global `config.json` containing all valid key-value pairs:
 ```
 
 For example, if the path `~/projects/rust` is present in `search_bases`, Nomos crawls each of its subdirectories:
+
 - It looks for a `nomos.json` file. If found, it reads each file specified by the key `task_files`.
 - If no `nomos.json` is found, it falls back to looking for files named `nomos`, `todo`, `tasks`, or `roadmap` with a `.nomos` extension (or legacy `.md`/`.txt` files) in the project directory.
 - It parses all discovered files and creates a task for each one.
@@ -145,6 +162,7 @@ Nomos task files are standard Markdown lists, allowing tasks to be embedded dire
 - Notes start with an asterisk (`*`) and provide details for the preceding task.
 
 #### Tasks
+
 The syntax of a task is:
 ```text
 - [Status] (Priority) Title :: [InceptionDate] [CompletionDate] Description +kindTag @locationTag keyTag=valueTag dep="Dependency Title"
@@ -166,12 +184,14 @@ The syntax of a task is:
 - **Description**: The description follows the date fields. It can contain tags and dependencies.
 
 #### Tags
+
 Nomos supports three types of tags:
 - `+Kind`: Semantic categorization (e.g., `+bug`, `+feature`), defined with a leading `+` without whitespace.
 - `@Location`: Location/subsystem target (e.g., `@src/main.rs`), defined with a leading `@`.
 - `Key=Value`: Custom key-value pairs for metadata (e.g., `est=2d`, `owner=Xqhare`).
 
 #### Dependencies & Kahn Sorting
+
 Dependencies are represented as special key-value pairs:
 - `dep="Dependency Title"` (same project)
 - `dep="project_name:Dependency Title"` (cross-project)
@@ -181,12 +201,15 @@ Nomos schedules all tasks and subtasks using Kahn's topological sort:
 - **Done vs. Cut**: A task marked as `Done` (`[x]`) can only explicitly depend on other completed (`Done`) tasks. If a dependency was `Cut` (`[C]`), the dependent task is blocked from completion. However, a parent task is allowed to be completed even if its subtasks were `Cut`.
 
 #### Notes
+
 Notes start with `*`. They must be associated with the task immediately above them at their respective indentation level and cannot define dependencies. Under v1, other indented prose lines that do not start with `- ` or `* ` are ignored.
 
 #### Task Children / Hierarchy
+
 A parent task can have child tasks immediately following it, indented by 4 spaces. Indentation level is syntactically significant.
 
 Example of a Nomos task file:
+
 ```markdown
 - [ ] (1) Integrate CLI toolkit :: 2026-05-22 Integrate Eshu +feature @src/main.rs
     - [ ] Setup argument builder :: Write command definitions
