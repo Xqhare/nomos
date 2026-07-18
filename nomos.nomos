@@ -48,3 +48,6 @@
 - [ ] (1) Move code :: @nomos/utils.rs can be moved out into the std lib when dep=software_ideas:"create my own std library in rust"
 - [x] (1) Sub task dependencies are ignored :: 
     * Easy fix: push each sub task into the flattened kahn list depending on the parent. rest should work as is.
+- [x] Expand kind tags
+    - [x] data_collection
+    - [x] specification

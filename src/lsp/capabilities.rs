@@ -38,9 +38,16 @@ pub fn get_diagnostics(uri: &str, content: &str) -> XffValue {
     // To be fast and accurate to the unsaved buffer, we can write the content to a temp file first.
     static DIAG_COUNTER: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
     let counter = DIAG_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("nomos");
-    let temp_path =
-        std::env::temp_dir().join(format!("nomos_diag_{}_{}.{}", std::process::id(), counter, extension));
+    let extension = path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or("nomos");
+    let temp_path = std::env::temp_dir().join(format!(
+        "nomos_diag_{}_{}.{}",
+        std::process::id(),
+        counter,
+        extension
+    ));
     if std::fs::write(&temp_path, content).is_ok() {
         if let Err(err) = parse_file(&temp_path, project) {
             // Extract line number
@@ -114,6 +121,8 @@ pub fn get_completions(
         "documentation".to_string(),
         "test".to_string(),
         "refactor".to_string(),
+        "data_collection".to_string(),
+        "specification".to_string(),
     ]);
     let mut location_tags = HashSet::new();
     let mut metadata_keys = HashSet::new();
@@ -159,13 +168,25 @@ pub fn get_completions(
 
             if let Some(sub_tasks) = &task.sub_tasks {
                 for sub_task in sub_tasks.iter() {
-                    collect_tags_recursively(sub_task, kind_tags, location_tags, metadata_keys, generic_tags);
+                    collect_tags_recursively(
+                        sub_task,
+                        kind_tags,
+                        location_tags,
+                        metadata_keys,
+                        generic_tags,
+                    );
                 }
             }
         }
 
         for task in n.get_tasks().iter() {
-            collect_tags_recursively(task, &mut kind_tags, &mut location_tags, &mut metadata_keys, &mut generic_tags);
+            collect_tags_recursively(
+                task,
+                &mut kind_tags,
+                &mut location_tags,
+                &mut metadata_keys,
+                &mut generic_tags,
+            );
         }
     }
 
@@ -603,19 +624,25 @@ mod tests {
         let diag_val = get_diagnostics("file:///tmp/test.nomos", content);
         let obj = diag_val.as_object().unwrap();
         let diags = obj.get("diagnostics").unwrap().as_array().unwrap();
-        assert!(diags.is_empty(), "Expected no diagnostics, but got: {:?}", diags);
+        assert!(
+            diags.is_empty(),
+            "Expected no diagnostics, but got: {:?}",
+            diags
+        );
     }
 
     #[test]
     fn test_generic_tag_completions() {
-        let temp_dir = env::temp_dir().join(format!("nomos_test_generic_comp_{}", std::process::id()));
+        let temp_dir =
+            env::temp_dir().join(format!("nomos_test_generic_comp_{}", std::process::id()));
         fs::create_dir_all(&temp_dir).unwrap();
 
         let task_file = temp_dir.join("tasks.nomos");
         fs::write(
             &task_file,
-            "- [ ] Tagged Task :: #important #todo\n    * Note with #refactor\n"
-        ).unwrap();
+            "- [ ] Tagged Task :: #important #todo\n    * Note with #refactor\n",
+        )
+        .unwrap();
 
         let config_file = temp_dir.join("config.json");
         let config_content = format!(
@@ -649,7 +676,9 @@ mod tests {
 }
 
 /// Parse a NemesisError context stack to extract workspace diagnostics
-pub fn parse_workspace_error_to_diagnostic(err: &nemesis::NemesisError) -> Option<(String, XffValue)> {
+pub fn parse_workspace_error_to_diagnostic(
+    err: &nemesis::NemesisError,
+) -> Option<(String, XffValue)> {
     let mut file_path = None;
     let mut line_num = 0;
     for ctx in err.contexts() {
@@ -703,7 +732,7 @@ mod tests_workspace_diag {
     fn test_parse_workspace_error() {
         let err = nemesis::NemesisError::new(
             "test",
-            std::io::Error::new(std::io::ErrorKind::Other, "test error")
+            std::io::Error::new(std::io::ErrorKind::Other, "test error"),
         )
         .add_ctx("Line: 10 in file: \"/home/xqhare/tasks.nomos\"");
 
@@ -712,7 +741,9 @@ mod tests_workspace_diag {
         let (file, val) = parsed.unwrap();
         assert_eq!(file, "/home/xqhare/tasks.nomos");
         let obj = val.as_object().unwrap();
-        assert_eq!(obj.get("uri").unwrap().as_string().unwrap(), "file:///home/xqhare/tasks.nomos");
+        assert_eq!(
+            obj.get("uri").unwrap().as_string().unwrap(),
+            "file:///home/xqhare/tasks.nomos"
+        );
     }
 }
-
